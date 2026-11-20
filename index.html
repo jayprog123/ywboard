@@ -1095,7 +1095,7 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 .ct-table tbody th.nm{min-width:5em}
 .ct-table tbody tr:nth-child(even){background:#fafcfb}
 .ct-table .inp{width:100%; min-width:7em; font-size:14px; padding:.35em .5em}
-.ct-table td:nth-child(8) .inp, .ct-table td:nth-child(7) .inp{min-width:10em}
+.ct-table td:nth-child(7) .inp{min-width:14em}
 .ct-print, .ct-print-foot{display:none}
 /* 휴대폰 카드 */
 .ct-q{width:100%; margin:0 0 10px; font-size:16px}
@@ -5148,8 +5148,12 @@ $('nbMailAlt').onclick = () => nbMailSend(true);
 $('nbMailTo').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) nbMailSend(false); };
 { const _lk = nbLock; nbLock = function(){ _lk.apply(this, arguments); if ($('nbMailBox')) $('nbMailBox').hidden = true; }; }
 /* ===== 교무수첩: 비상 연락망 (선생님만, 비밀번호로 잠김 · 휴대폰에서 바로 전화) ===== */
-const CT_F = [['r1', '보호자 1', '관계 (예: 어머니)'], ['p1', '연락처 1', '010-0000-0000'], ['r2', '보호자 2', '관계 (예: 아버지)'], ['p2', '연락처 2', '010-0000-0000'], ['lang', '쓰는 말', '예: 베트남어, 통역 필요'], ['m', '메모', '예: 오후 6시 뒤 통화 가능']];
-const ctAll = () => (nbData().contacts = nbData().contacts || {});
+const CT_F = [['r1', '보호자 1', '관계 (예: 어머니)'], ['p1', '연락처 1', '010-0000-0000'], ['r2', '보호자 2', '관계 (예: 아버지)'], ['p2', '연락처 2', '010-0000-0000'], ['m', '메모', '예: 베트남어 통역 필요, 오후 6시 뒤 통화']];
+function ctAll(){
+  const all = (nbData().contacts = nbData().contacts || {});
+  Object.values(all).forEach(c => { if (c.lang){ c.m = c.m ? `${c.lang} · ${c.m}` : c.lang; delete c.lang; } }); // 예전 '쓰는 말' 칸은 메모로
+  return all;
+}
 const ctOf = n => ctAll()[n] || {};
 function ctSet(n, f, v){
   const all = ctAll(), c = Object.assign({}, all[n]);
@@ -5187,7 +5191,7 @@ function renderNbContact(){
         if (CT.edit === n) return `<div class="ct-card on"><div class="ct-top"><b>${n}. ${esc(name.trim())}</b><span class="sp"></span><button class="b go" type="button" data-ctdone>다 적었어요</button></div>
           <div class="ct-form">${CT_F.map(([f, l, ph]) => `<label>${l}<input class="inp" data-ctf="${f}" data-ctn="${n}" value="${esc(f[0] === 'p' ? ctPhone(c[f]) : c[f] || '')}" placeholder="${ph}" ${f[0] === 'p' ? 'type="tel" inputmode="tel"' : ''}></label>`).join('')}</div></div>`;
         const calls = ctCallBtns(c);
-        return `<div class="ct-card"><div class="ct-top"><b>${n}. ${esc(name.trim())}</b>${c.lang ? `<span class="ct-lang">${esc(c.lang)}</span>` : ''}<span class="sp"></span><button class="mini" type="button" data-ctedit="${n}">고치기</button></div>
+        return `<div class="ct-card"><div class="ct-top"><b>${n}. ${esc(name.trim())}</b><span class="sp"></span><button class="mini" type="button" data-ctedit="${n}">고치기</button></div>
           ${calls || '<p class="ct-empty">아직 연락처가 없어요. ‘고치기’를 눌러 적어 주세요.</p>'}${c.m ? `<p class="ct-memo">${esc(c.m)}</p>` : ''}</div>`; }).join('') || '<p class="ct-empty">찾는 아이가 없어요.</p>'}</div>`;
     $('ctQ').oninput = e => { CT.q = e.target.value; const p = e.target.selectionStart; renderNbContact(); const i = $('ctQ'); i.focus(); try{ i.setSelectionRange(p, p); }catch(er){} };
     $('nbBox').querySelectorAll('[data-ctedit]').forEach(b => b.onclick = () => { CT.edit = +b.dataset.ctedit; renderNbContact(); const f = $('nbBox').querySelector('[data-ctf]'); if (f) f.focus(); });
@@ -5214,7 +5218,7 @@ function ctXlsx(){
   R.forEach(({n: no, name}, i) => { const c = ctOf(no), z = i % 2; heights[r.length] = 26;
     r.push([{v:no, s:z ? 8 : 5}, {v:name.trim(), s:z ? 8 : 5}].concat(CT_F.map(([f]) => ({v:f[0] === 'p' ? ctPhone(c[f]) : c[f] || '', s:z ? 7 : 0})))); });
   heights[r.length] = 20; r.push([{v:'용원칠판 © 2026 정예훈(개굴정)', s:11}]);
-  XL.save(`비상연락망_${dkey()}.xlsx`, [{name:'비상 연락망', widths:[7, 11, 12, 17, 12, 17, 18, 26], rows:r, heights, merges:T.merges, landscape:true, onePage:true, freeze:[2, head]}]);
+  XL.save(`비상연락망_${dkey()}.xlsx`, [{name:'비상 연락망', widths:[7, 11, 12, 17, 12, 17, 34], rows:r, heights, merges:T.merges, landscape:true, onePage:true, freeze:[2, head]}]);
 }
 // 하루 · 주간 · 비상 연락망 탭
 $('nbTabs').insertAdjacentHTML('beforeend', '<button type="button" data-nbt="contact">비상 연락망</button>');
@@ -5306,21 +5310,22 @@ function ctMapRows(rows){
     else if (map.name == null && /^(이름|성명|학생명?|학생이름)$/.test(h)) map.name = i;
     else if (/연락처|전화|휴대|핸드폰|폰|번호/.test(h)){ if (ph < 2) map['p' + (++ph)] = i; }
     else if (/보호자|관계|부모|학부모/.test(h)){ if (rel < 2) map['r' + (++rel)] = i; }
-    else if (map.lang == null && /쓰는말|언어|사용언어|모국어/.test(h)) map.lang = i;
-    else if (map.m == null && /메모|비고|참고|특이/.test(h)) map.m = i;
+    else if (/쓰는말|언어|사용언어|모국어|메모|비고|참고|특이/.test(h)) (map.ms = map.ms || []).push(i);
   });
   if (map.n == null && map.name == null) return {err:'‘번호’나 ‘이름’ 칸이 있어야 어느 아이인지 알 수 있어요.'};
   const R = sorted(), byName = new Map(R.map(k => [norm(k.name), k.n])), out = [], miss = [];
   const fixPh = v => { let d = String(v || '').replace(/[^\d]/g, ''); if (/^1\d{8,9}$/.test(d)) d = '0' + d; return d ? ctPhone(d) : String(v || '').trim(); };
+  const fixPh2 = (f, v) => f[0] === 'p' ? fixPh(v) : v;
   rows.slice(hi + 1).forEach((r, i) => {
     if (!r || !r.some(c => c)) return;
     const name = map.name != null ? (r[map.name] || '') : '', num = map.n != null ? parseInt(r[map.n], 10) : NaN;
     let n = !isNaN(num) && R.some(k => k.n === num) ? num : byName.get(norm(name));
     if (!n){ if (name || !isNaN(num)) miss.push(`${hi + i + 2}번째 줄 ${isNaN(num) ? '' : num + '번 '}${name}`.trim()); return; }
-    const c = {}; CT_F.forEach(([f]) => { if (map[f] == null) return; const v = (r[map[f]] || '').trim(); if (v) c[f] = f[0] === 'p' ? fixPh(v) : v; });
+    const c = {}; CT_F.forEach(([f]) => { if (f === 'm' || map[f] == null) return; const v = (r[map[f]] || '').trim(); if (v) c[f] = fixPh2(f, v); });
+    const memo = (map.ms || []).map(j => (r[j] || '').trim()).filter(Boolean).join(' · '); if (memo) c.m = memo;
     if (Object.keys(c).length) out.push({n, name:(R.find(k => k.n === n) || {}).name || name, c});
   });
-  return {out, miss, cols:CT_F.filter(([f]) => map[f] != null).map(([, l]) => l)};
+  return {out, miss, cols:CT_F.filter(([f]) => f === 'm' ? (map.ms || []).length : map[f] != null).map(([, l]) => l)};
 }
 const CTI = {res:null};
 function ctImportView(){
@@ -5330,7 +5335,7 @@ function ctImportView(){
   if (r.err){ box.innerHTML = `<p class="ct-imp-bad">${esc(r.err)}</p><button class="mini" type="button" id="ctImpX">닫기</button>`; $('ctImpX').onclick = () => { CTI.res = null; ctImportView(); }; return; }
   box.innerHTML = `<p><b>${r.out.length}명</b>의 연락처를 읽었어요. 읽은 칸: ${esc(r.cols.join(', ') || '없음')}</p>
     ${r.miss.length ? `<p class="ct-imp-bad">명단에서 찾지 못한 줄 ${r.miss.length}개: ${esc(r.miss.slice(0, 6).join(' · '))}${r.miss.length > 6 ? ' …' : ''}<br><small>번호나 이름이 우리 반 명단과 같은지 확인해 주세요.</small></p>` : ''}
-    <ul class="ct-imp-list">${r.out.slice(0, 40).map(x => `<li><b>${x.n}. ${esc(String(x.name).trim())}</b> ${esc([x.c.r1, x.c.p1, x.c.r2, x.c.p2, x.c.lang].filter(Boolean).join(' · '))}</li>`).join('')}</ul>
+    <ul class="ct-imp-list">${r.out.slice(0, 40).map(x => `<li><b>${x.n}. ${esc(String(x.name).trim())}</b> ${esc([x.c.r1, x.c.p1, x.c.r2, x.c.p2, x.c.m].filter(Boolean).join(' · '))}</li>`).join('')}</ul>
     <p class="ct-imp-how">빈 칸은 지금 적힌 내용을 그대로 두고, 값이 있는 칸만 새로 바꿔요.</p>
     <div class="ct-imp-btns"><button class="b go" type="button" id="ctImpGo" ${r.out.length ? '' : 'disabled'}>연락망에 넣기</button><button class="b" type="button" id="ctImpX">그만두기</button></div>`;
   $('ctImpX').onclick = () => { CTI.res = null; ctImportView(); };
