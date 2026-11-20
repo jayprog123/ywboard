@@ -788,6 +788,16 @@ body.mobile #syDlg .roster{width:min(560px,94vw); max-height:90vh; overflow:auto
 .nb-nav b{min-width:8.6em; font-size:.95em}
 .nb-jump{font-size:.72em!important; width:8.6em!important; padding:.25em .4em!important}
 .nb-foot #nbPwBtn{margin-left:auto}
+/* 교사 확인 줄: 인쇄할 때만 */
+.rp-sign{display:none}
+@media print{
+  body.printing-nb .rp-sign{display:block; margin-top:14pt; font-size:10.5pt; page-break-inside:avoid}
+  body.printing-nb .rp-sign p{margin:0 0 10pt}
+  body.printing-nb .rp-sign-row{display:flex; justify-content:flex-end; gap:36pt; align-items:flex-end}
+  body.printing-nb .rp-line{display:inline-block; width:110pt; border-bottom:1px solid #1c2b25; margin:0 6pt; height:1em; vertical-align:bottom}
+}
+/* 글 다듬기 단추는 쓰지 않음 */
+.polish{display:none!important}
 /* ===== 휴대폰 화면 다듬기 ===== */
 body.mobile #mob{font-size:17px; background:#f4f7f5; padding-bottom:96px}
 body.mobile .mob-top{padding:14px 18px; font-size:1.25em; box-shadow:0 1px 0 var(--line)}
@@ -1054,6 +1064,23 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 .mg-foot button{width:auto; color:#9a3b00; font-size:.92em}
 .mg-foot button:hover{background:#fff1e5; color:#9a3b00}
 @media (max-width:520px){ .mg-grid{grid-template-columns:1fr} }
+/* 자동 저장 표시 */
+.autosave{margin:.2em 0 0; font-size:13px; color:var(--ink-3)}
+.autosave.on{color:var(--teal)}
+.nb-foot .autosave{margin:0 0 0 1em}
+.nb-sign-opt{display:inline-flex; align-items:center; gap:.3em; font-size:14px; color:var(--ink-2); margin-right:.6em; cursor:pointer}
+.nt-at{font-size:12px; color:var(--ink-3); white-space:nowrap}
+@media print{ .autosave{display:none!important} }
+/* 교무수첩 메일로 보내기 */
+.nb-mail{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 14px; margin:0 0 8px; border:1px solid var(--line-soft); border-radius:12px; background:var(--teal-soft); font-size:15px}
+.nb-mail .inp{flex:1; min-width:16em; font-size:15px}
+.nb-mail .b{font-size:15px; padding:.45em 1.2em}
+.nb-mail-how{flex-basis:100%; margin:0; font-size:13px; color:var(--ink-2)}
+.nb-mail-msg{flex-basis:100%; margin:0; font-size:14px; color:var(--ink-2)}
+.nb-mail-msg:empty{display:none}
+.nb-mail-msg.ok{color:var(--teal); font-weight:600}
+.nb-mail-msg.bad{color:#b4231a}
+@media print{ .nb-mail{display:none!important} }
 /* ===== 처음 설정 ===== */
 #suDlg{position:fixed; inset:0; z-index:47; background:rgba(28,43,37,.45); display:flex; align-items:center; justify-content:center; padding:16px}
 .su-dlg{width:min(860px,96vw); max-height:94vh; gap:10px}
@@ -1602,6 +1629,8 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 // 1) 아래 비밀번호를 선생님만 아는 말로 바꾸세요. 학급 판에서 연결할 때 똑같이 넣어요.
 const PASSWORD = '여기에-비밀번호를-바꿔-쓰세요';
 
+// 2) 교무수첩 '메일로 보내기'를 쓰려면, 배포할 때 나오는 권한 창에서 메일 보내기도 허용해 주세요.
+
 // 기록은 선생님 구글 드라이브의 이 파일에 저장돼요. 하루에 한 번 백업도 남겨요(30일 치).
 const FILE_NAME = '우리반_동기화_자료.json';
 const BACKUP_FOLDER = '우리반_동기화_백업';
@@ -1640,7 +1669,24 @@ function handle_(p) {
       lock.releaseLock();
     }
   }
+  if (p.action === 'mail') {
+    // 교무수첩 주간 기록: 선생님 구글 계정에서 메일로 보내고, 드라이브 '교무수첩_보관' 폴더에도 남겨요.
+    const to = String(p.to || Session.getEffectiveUser().getEmail());
+    const blob = Utilities.newBlob(Utilities.base64Decode(p.b64 || ''), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', p.name || '교무수첩.xlsx');
+    const saved = mailFolder_().createFile(blob);
+    MailApp.sendEmail({ to: to, subject: p.subject || '교무수첩 주간 기록', body: (p.body || '') + '\n\n구글 드라이브 보관: ' + saved.getUrl(), attachments: [blob] });
+    return out_({ ok: true, to: to, at: new Date().toISOString() });
+  }
   return out_({ ok: false, error: 'unknown_action' });
+}
+
+function mailFolder_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('mailFolderId');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  const f = DriveApp.createFolder('교무수첩_보관');
+  props.setProperty('mailFolderId', f.getId());
+  return f;
 }
 
 function read_() {
@@ -2258,21 +2304,21 @@ function renderNotes(){
   const nm = kidName(selKid);
   box.innerHTML = `<div class="who"><b>${selKid}번 ${nm ? esc(nm) : ''}</b>${nm ? '' : '<span class="muted">이름이 없어요</span>'}<button class="mini" id="kidNameBtn" type="button">${nm ? '이름 고치기' : '이름 넣기'}</button><input class="inp" id="kidName" value="${esc(nm)}" placeholder="이름" aria-label="이름" hidden></div>
     <div class="note-add"><input class="inp" id="noteIn" placeholder="오늘 있었던 일, 칭찬, 상담 내용 등" aria-label="기록"><button class="polish" id="notePolish" type="button" title="글 다듬기">다듬기</button><button class="b go" id="noteAdd" type="button">기록</button></div>
-    <ul class="list">${list.length ? list.map(x => `<li><time>${esc(x.d.slice(5).replace('-','/'))}</time><span>${esc(x.t)}</span><button type="button" data-rm="${esc(x.id)}" aria-label="지우기">✕</button></li>`).join('') : '<li class="muted">아직 기록이 없어요</li>'}</ul>`;
+    <ul class="list">${list.length ? list.map(x => `<li><time>${esc(noteStamp(x))}</time><span>${esc(x.t)}</span><button type="button" data-rm="${esc(x.id)}" aria-label="지우기">✕</button></li>`).join('') : '<li class="muted">아직 기록이 없어요</li>'}</ul>`;
   $('kidNameBtn').onclick = () => { $('kidName').hidden = false; $('kidNameBtn').hidden = true; $('kidName').focus(); };
   $('kidName').oninput = e => { const st = roster().find(x => x.n === selKid); if (st){ st.name = e.target.value; save(); } };
   $('kidName').onchange = () => renderHw();
   $('kidName').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) renderHw(); };
   const add = () => {
     const t = $('noteIn').value.trim(); if (!t) return;
-    (S.notes[selKid] = S.notes[selKid] || []).push({id: uid36(), d: dkey(), t});
+    (S.notes[selKid] = S.notes[selKid] || []).push({id: uid36(), d: dkey(), t, at: new Date().toISOString()});
     save(); renderHw(); $('noteIn').focus();
   };
   $('noteAdd').onclick = add;
   $('notePolish').onclick = () => polish($('noteIn'), $('notePolish'));
   $('noteIn').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) add(); };
   box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
-    if (b.dataset.confirm){ S.notes[selKid] = (S.notes[selKid] || []).filter(x => x.id !== b.dataset.rm); save(); renderHw(); }
+    if (b.dataset.confirm){ noteTrash(selKid, b.dataset.rm); save(); renderHw(); }
     else { b.dataset.confirm = '1'; b.textContent = '지울까요?'; b.style.color = 'var(--coral)'; }
   });
 }
@@ -3656,14 +3702,14 @@ function renderMob(){
   $('mobBody').querySelectorAll('[data-mkid]').forEach(b => b.onclick = () => { mbKid = +b.dataset.mkid; renderMob(); });
   if ($('mbNoteAdd')) $('mbNoteAdd').onclick = () => {
     const t = $('mbNoteIn').value.trim(); if (!t || !mbKid) return;
-    (S.notes[mbKid] = S.notes[mbKid] || []).push({id:uid36(), d:k, t}); save(); renderMob();
+    (S.notes[mbKid] = S.notes[mbKid] || []).push({id:uid36(), d:k, t, at:new Date().toISOString()}); save(); renderMob();
   };
   const noteOf = id => (S.notes[mbKid] || []).find(x => x.id === id);
-  $('mobBody').querySelectorAll('[data-ntext]').forEach(inp => inp.oninput = () => { const x = noteOf(inp.dataset.ntext); if (x){ x.t = inp.value; save(); } });
+  $('mobBody').querySelectorAll('[data-ntext]').forEach(inp => inp.oninput = () => { const x = noteOf(inp.dataset.ntext); if (x) noteEdit(x, inp.value); });
   $('mobBody').querySelectorAll('[data-ndate]').forEach(inp => inp.onchange = () => { const x = noteOf(inp.dataset.ndate); if (x && inp.value){ x.d = inp.value; save(); renderMob(); } });
   $('mobBody').querySelectorAll('[data-nrm]').forEach(b => b.onclick = () => {
     if (!b.dataset.ok){ b.dataset.ok = 1; b.textContent = '정말 지울까요?'; return; }
-    S.notes[mbKid] = (S.notes[mbKid] || []).filter(x => x.id !== b.dataset.nrm); if (!S.notes[mbKid].length) delete S.notes[mbKid]; save(); renderMob();
+    noteTrash(mbKid, b.dataset.nrm); save(); renderMob();
   });
   if ($('mbMemo')) $('mbMemo').oninput = e => { S.memo = e.target.value; save(); };
 }
@@ -3728,10 +3774,10 @@ const XL = (() => {
   const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
     + '<fonts count="6">' + font(11, {c:'FF1C2B25'}) + font(11, {b:1, c:'FFFFFFFF'}) + font(18, {b:1, c:'FFFFFFFF'}) + font(11, {b:1, c:'FF0F6B50'}) + font(10.5, {c:'FF44544D'}) + font(9, {c:'FF8A9891'}) + '</fonts>'
     + '<fills count="8"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' + fill('FF17A67C') + fill('FF0F6B50') + fill('FFE3F5EC') + fill('FFF1F5F3') + fill('FFF7FAF8') + fill('FFFFF6D6') + '</fills>'
-    + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' + bd('FFB7C7BF', 'thin') + '</borders>'
-    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="13">'
+    + '<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border>' + bd('FFB7C7BF', 'thin') + '<border><left/><right/><top/><bottom style="thin"><color rgb="FF1C2B25"/></bottom><diagonal/></border></borders>'
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="15">'
     + xf(0, 0, 1, TOP) + xf(1, 2, 1, MID) + xf(2, 3, 0, LFT) + xf(3, 4, 1, MID) + xf(4, 5, 0, LFT) + xf(0, 0, 1, MID) + xf(0, 0, 0, 'vertical="top"')
-    + xf(0, 6, 1, TOP) + xf(0, 6, 1, MID) + xf(0, 7, 1, TOP) + xf(0, 7, 1, MID) + xf(5, 0, 0, LFT) + xf(3, 0, 1, MID)
+    + xf(0, 6, 1, TOP) + xf(0, 6, 1, MID) + xf(0, 7, 1, TOP) + xf(0, 7, 1, MID) + xf(5, 0, 0, LFT) + xf(3, 0, 1, MID) + xf(0, 0, 0, 'horizontal="right" vertical="center"') + xf(0, 0, 2, 'horizontal="right" vertical="bottom"')
     + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
   // 글 길이로 줄 높이 어림 (한글은 영문 두 칸)
   const wlen = s => { let n = 0; for (const ch of String(s)) n += ch.charCodeAt(0) > 0x2e7f ? 2.1 : 1.1; return n; };
@@ -3792,7 +3838,7 @@ function reportSheets(){
     const a = []; let got = 0, all = 0, st = 0;
     ks.forEach((k, i) => { const s2 = (S.att[k] || {})[n]; if (s2) a.push(`${ATT[s2]} ${md(days[i])}`);
       const its = itemsOf(k); all += its.length; got += its.filter(x => x.done.includes(n)).length; st += ((S.praiseLog || {})[k] || {})[n] || 0; });
-    const notes = (S.notes[n] || []).filter(x => x.d >= ks[0] && x.d <= ks[4]).sort((p, q) => p.d < q.d ? -1 : 1).map(x => `${md(new Date(x.d + 'T12:00'))} ${x.t}`).join('\n');
+    const notes = noteAll(n).filter(x => x.d >= ks[0] && x.d <= ks[4]).sort((p, q) => (p.d + (p.at || '')) < (q.d + (q.at || '')) ? -1 : 1).map(x => noteLine(x)).join('\n');
     return [n, nm(n), a.join('\n') || '모두 출석', all ? `${got}/${all}` : '', st || '', S.praise[n] || 0, notes];
   });
   const chk = S.labels.check || '확인', note = S.labels.note || '아이 기록';
@@ -3874,7 +3920,7 @@ function renderNb(){
     <section class="nb-sec"><h4>회의 · 전달 사항</h4><textarea class="inp" data-nbf="meet" placeholder="회의 내용, 전달받은 일을 적어요">${esc(day.meet || '')}</textarea></section>
     <section class="nb-sec"><h4>${esc(S.labels.note || '아이 기록')} <small>학급 체크의 기록과 같아요</small></h4>
       <div class="nb-add"><select class="inp" id="nbKid">${R.map(({n, name}) => `<option value="${n}">${n} ${esc(name.trim())}</option>`).join('')}</select><input class="inp" id="nbNoteIn" placeholder="이 날 아이 기록"><button class="b go" id="nbNoteAdd" type="button">기록</button></div>
-      <ul class="nb-list">${notes.length ? notes.map(({n, name, x}) => `<li><span class="who">${n} ${esc(name)}</span><input class="inp" data-ntx="${n}:${x.id}" value="${esc(x.t)}"><button class="mini" type="button" data-nrm2="${n}:${x.id}">지우기</button></li>`).join('') : '<li class="nb-none">이 날 아이 기록이 없어요</li>'}</ul></section>
+      <ul class="nb-list">${notes.length ? notes.map(({n, name, x}) => `<li><span class="who">${n} ${esc(name)} <small class="nt-at">${esc(x.at ? noteHM(x.at) + (x.e ? " · 고침" : "") : "")}</small></span><input class="inp" data-ntx="${n}:${x.id}" value="${esc(x.t)}"><button class="mini" type="button" data-nrm2="${n}:${x.id}">지우기</button></li>`).join('') : '<li class="nb-none">이 날 아이 기록이 없어요</li>'}</ul></section>
     <section class="nb-sec"><h4>하루 기록</h4><textarea class="inp" data-nbf="day" placeholder="그날 있었던 일, 기억해 둘 것을 자유롭게 적어요">${esc(day.day || '')}</textarea></section>`;
   const B = $('nbBox'), wk = id => (S.events[k] || []).find(x => x.id === id);
   let pub = false;
@@ -3887,12 +3933,12 @@ function renderNb(){
   B.querySelectorAll('[data-wrm]').forEach(b => b.onclick = () => { if (!b.dataset.ok){ b.dataset.ok = 1; b.textContent = '정말 지울까요?'; return; }
     S.events[k] = (S.events[k] || []).filter(x => x.id !== b.dataset.wrm); if (!S.events[k].length) delete S.events[k]; save(); renderCal(); renderNb(); });
   B.querySelectorAll('[data-nbf]').forEach(t => t.oninput = () => { nbSetDay(k, t.dataset.nbf, t.value); nbArm(); });
-  const addN = () => { const t = $('nbNoteIn').value.trim(), n = +$('nbKid').value; if (!t || !n) return; (S.notes[n] = S.notes[n] || []).push({id:uid36(), d:k, t}); save(); NB.kid = n; renderAll(); renderNb(); };
+  const addN = () => { const t = $('nbNoteIn').value.trim(), n = +$('nbKid').value; if (!t || !n) return; (S.notes[n] = S.notes[n] || []).push({id:uid36(), d:k, t, at:new Date().toISOString()}); save(); NB.kid = n; renderAll(); renderNb(); };
   if (NB.kid && R.some(x => x.n === NB.kid)) $('nbKid').value = NB.kid;
   $('nbNoteAdd').onclick = addN; $('nbNoteIn').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) addN(); };
-  B.querySelectorAll('[data-ntx]').forEach(i => i.oninput = () => { const [n, id] = i.dataset.ntx.split(':'), x = (S.notes[n] || []).find(y => y.id === id); if (x && i.value.trim()){ x.t = i.value; save(); } });
+  B.querySelectorAll('[data-ntx]').forEach(i => i.oninput = () => { const [n, id] = i.dataset.ntx.split(':'), x = (S.notes[n] || []).find(y => y.id === id); if (x) noteEdit(x, i.value); });
   B.querySelectorAll('[data-nrm2]').forEach(b => b.onclick = () => { if (!b.dataset.ok){ b.dataset.ok = 1; b.textContent = '정말 지울까요?'; return; }
-    const [n, id] = b.dataset.nrm2.split(':'); S.notes[n] = (S.notes[n] || []).filter(y => y.id !== id); if (!S.notes[n].length) delete S.notes[n]; save(); renderAll(); renderNb(); });
+    const [n, id] = b.dataset.nrm2.split(':'); noteTrash(n, id); save(); renderAll(); renderNb(); });
   B.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { NB.d = new Date(b.dataset.go + 'T12:00'); renderNb(); });
 }
 function openNb(open, tab){
@@ -3943,7 +3989,7 @@ function weekData(d){
     const a = []; let got = 0, all = 0, st = 0;
     ks.forEach((k, i) => { const s2 = (S.att[k] || {})[n]; if (s2) a.push(`${ATT[s2]} ${md(days[i])}`);
       const its = itemsOf(k); all += its.length; got += its.filter(x => x.done.includes(n)).length; st += ((S.praiseLog || {})[k] || {})[n] || 0; });
-    const notes = (S.notes[n] || []).filter(x => x.d >= ks[0] && x.d <= ks[4]).sort((p, q) => p.d < q.d ? -1 : 1).map(x => `${md(new Date(x.d + 'T12:00'))} ${x.t}`); tot.note += notes.length;
+    const notes = noteAll(n).filter(x => x.d >= ks[0] && x.d <= ks[4]).sort((p, q) => (p.d + (p.at || '')) < (q.d + (q.at || '')) ? -1 : 1).map(x => noteLine(x)); tot.note += notes.filter(l => !l.startsWith('[지움')).length;
     return {n, name:nm(n), att:a, chk: all ? `${got}/${all}` : '', star:st, total:S.praise[n] || 0, notes};
   });
   const f = days[0], l = days[4];
@@ -3961,6 +4007,7 @@ function renderNbWeek(){
     <h3>학생별</h3>
     <table class="rp-t rp-kids2"><thead><tr><th>번호</th><th>이름</th><th>출결</th><th>${esc(S.labels.check || '확인')}</th><th>이번 주 별</th><th>모은 별</th><th>${esc(S.labels.note || '아이 기록')}</th></tr></thead>
     <tbody>${W.kids.map(k => `<tr class="${k.notes.length || k.att.length ? 'rp-hl' : ''}"><th>${k.n}</th><th>${esc(k.name)}</th><td>${k.att.join('<br>') || '<small>모두 출석</small>'}</td><td class="rp-c">${k.chk}</td><td class="rp-c">${k.star ? (k.star > 0 ? '+' : '') + k.star : ''}</td><td class="rp-c">${k.total || ''}</td><td>${k.notes.map(esc).join('<br>')}</td></tr>`).join('')}</tbody></table>
+    ${cfg().nbSign === false ? '' : `<div class="rp-sign"><p>위 기록은 담임교사가 직접 작성하였음을 확인합니다.</p><p class="rp-sign-row"><span>작성일:&emsp;&emsp;&emsp;년&emsp;&emsp;월&emsp;&emsp;일</span><span>교사:<i class="rp-line"></i>(인)</span></p></div>`}
     <p class="rp-foot">날짜를 누르면 그날 수첩이 열려요. · ${new Date().toLocaleString('ko-KR')} 출력 · 용원칠판 © 2026 정예훈(개굴정)</p></div>`;
   $('nbBox').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { NB.d = new Date(b.dataset.go + 'T12:00'); NB.tab = 'day'; renderNb(); });
 }
@@ -3972,6 +4019,19 @@ function xlTop(title, lines, n){ // 제목 띠 + 안내 줄들 + 빈 줄
   heights[rows.length] = 8; rows.push(Array.from({length:n}, () => ({v:'', s:6})));
   return {rows, heights, merges};
 }
+// 교사 확인 줄: 작성일 · 교사 (인) — 출력한 뒤 직접 쓰고 서명(날인)
+function xlSign(rows, heights, merges, n, dateTo, who){
+  const L = i => String.fromCharCode(65 + i), blank = () => ({v:'', s:6});
+  heights[rows.length] = 16; rows.push(Array.from({length:n}, blank));
+  heights[rows.length] = 24; rows.push([{v:'위 기록은 담임교사가 직접 작성하였음을 확인합니다.', s:4}].concat(Array.from({length:n - 1}, () => ({v:'', s:4}))));
+  merges.push(`A${rows.length}:${L(n - 1)}${rows.length}`);
+  heights[rows.length] = 34;
+  const r = Array.from({length:n}, blank);
+  r[0] = {v:'작성일:          년          월          일', s:13};
+  r[who] = {v:'교사:', s:13}; r[n - 1] = {v:'(인)', s:14};
+  rows.push(r); merges.push(`A${rows.length}:${L(dateTo)}${rows.length}`);
+  if (who + 1 < n - 1) merges.push(`${L(who + 1)}${rows.length}:${L(n - 1)}${rows.length}`);
+}
 function xlKidSheet(title, lines, kids){
   const kw = [7, 13, 20, 11, 11, 11, 84], T = xlTop(title, lines, 7), k = T.rows, kh = T.heights;
   kh[k.length] = 30; k.push(['번호', '이름', '출결', S.labels.check || '확인', '이번 주 별', '모은 별', S.labels.note || '아이 기록'].map(v => ({v, s:1})));
@@ -3980,6 +4040,7 @@ function xlKidSheet(title, lines, kids){
     kh[k.length] = xlH(Math.max(x.att.length, XL.lines(x.notes.join('\n'), kw[6] - 2)), 26);
     k.push([{v:x.n, s:c}, {v:x.name, s:c}, {v:x.att.join('\n') || '모두 출석', s:c}, {v:x.chk, s:c}, {v:x.star ? (x.star > 0 ? '+' : '') + x.star : '', s:c}, {v:x.total || '', s:c}, {v:x.notes.join('\n'), s:b}]); });
   kh[k.length] = 20; k.push([{v:'노란 줄: 출결이나 기록이 있는 아이 · 용원칠판 © 2026 정예훈(개굴정)', s:11}]);
+  if (cfg().nbSign !== false) xlSign(k, kh, T.merges, 7, 3, 5);
   return {name:'학생별', widths:kw, rows:k, heights:kh, merges:T.merges, landscape:true, freeze:[2, head]};
 }
 function nbWeekSheets(){
@@ -3992,6 +4053,7 @@ function nbWeekSheets(){
     heights[r.length] = xlH(Math.max(...W.cols.map((c, i) => XL.lines(c[key].join('\n'), wd[i + 1] - 2))), MIN[key] || 40);
     r.push([{v:label, s:3}].concat(W.cols.map(c => ({v:c[key].join('\n'), s:center ? (z ? 8 : 5) : (z ? 7 : 0)})))); });
   heights[r.length] = 20; r.push([{v:'✔ 다 한 업무 · □ 남은 업무 · 용원칠판 © 2026 정예훈(개굴정)', s:11}]);
+  if (cfg().nbSign !== false) xlSign(r, heights, T.merges, 6, 3, 4);
   return {first:W.days[0], sheets:[
     {name:'주간 기록', widths:wd, rows:r, heights, merges:T.merges, landscape:true, onePage:true, freeze:[1, head]},
     xlKidSheet(`${cfg().sub} 교무수첩 · 학생별 주간 기록`, [`기간  ${W.span}`], W.kids)]};
@@ -4802,7 +4864,7 @@ $('yrGo').onclick = () => {
   } catch (e){ $('yrMsg').textContent = '기록 파일을 받지 못해서 비우지 않았어요. 다시 눌러 주세요.'; return; }
   // 2) 고른 것만 비우기
   if ($('yrRec').checked){
-    S.att = {}; S.hw = {}; S.notes = {}; S.praise = {}; S.praiseLog = {}; S.pickUsed = []; S.wxLog = {};
+    S.att = {}; S.hw = {}; S.notes = {}; S.noteDel = {}; S.praise = {}; S.praiseLog = {}; S.pickUsed = []; S.wxLog = {};
     const nb = nbData(); nb.days = {};
   }
   if ($('yrPlan').checked){
@@ -4854,6 +4916,164 @@ $('yrSetup').onclick = () => { yrOpen(false); $('suBtn').click(); };
   [...pop.children].forEach(el => { if (el !== grid && el !== foot) el.hidden = true; });
   pop.classList.add('mg-new');
 })();
+/* ===== 아이 기록: 쓴 시각 · 고친 흔적 · 지운 기록 보관 ===== */
+function p2t(v){ return String(v).padStart(2, '0'); }
+function noteHM(iso){ const d = new Date(iso); return `${p2t(d.getHours())}:${p2t(d.getMinutes())}`; }
+function noteMD(iso){ const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()}`; }
+// 목록에 보이는 날짜·시각: "11/20 12:53" (예전 기록은 날짜만)
+function noteStamp(x){
+  const day = x.d ? x.d.slice(5).replace('-', '/').replace(/^0/, '').replace('/0', '/') : '';
+  return x.at ? `${day} ${noteHM(x.at)}` + (x.e ? ' · 고침' : '') : day;
+}
+// 내보내기 한 줄: 날짜 시각 내용 (고친 흔적, 지운 기록 표시)
+function noteLine(x){
+  const day = x.d ? x.d.slice(5).replace('-', '/').replace(/^0/, '').replace('/0', '/') : '';
+  let s = `${day}${x.at ? ' ' + noteHM(x.at) + ' 작성' : ''} ${x.t}`;
+  if (x.del) s = `[지움 ${noteMD(x.del)} ${noteHM(x.del)}] ` + s;
+  (x.h || []).forEach(h => { s += `\n   └ ${noteMD(h.at)} ${noteHM(h.at)} 고치기 전: ${h.t}`; });
+  return s;
+}
+// 고칠 때: 처음 고치기 시작할 때의 글을 남김 (2분 넘게 쉬었다 다시 고치면 새 흔적)
+var NOTE_SESS = new Map();
+function noteEdit(x, v){
+  if (!x || !v.trim() || v === x.t) return;
+  const now = Date.now(), last = NOTE_SESS.get(x.id);
+  if (!last || now - last > 120000){ (x.h = x.h || []).push({t:x.t, at:new Date().toISOString()}); }
+  NOTE_SESS.set(x.id, now);
+  x.t = v; x.e = new Date().toISOString(); save();
+}
+// 지울 때: 목록에서는 빼되, 지운 기록함에 시각과 함께 보관
+function noteTrash(n, id){
+  const arr = S.notes[n] || [], x = arr.find(y => y.id === id);
+  if (x){ (S.noteDel = S.noteDel || {}); (S.noteDel[n] = S.noteDel[n] || []).push(Object.assign({}, x, {del:new Date().toISOString()})); }
+  S.notes[n] = arr.filter(y => y.id !== id); if (!S.notes[n].length) delete S.notes[n];
+}
+// 내보내기용: 남은 기록 + 지운 기록
+function noteAll(n){ return (S.notes[n] || []).concat((S.noteDel || {})[n] || []); }
+/* ===== 자동 저장 표시 + 쓰던 아이 기록 임시 저장 ===== */
+{
+  const _sv = save;
+  save = function(){
+    _sv.apply(this, arguments);
+    const d = new Date(), t = `${p2t(d.getHours())}:${p2t(d.getMinutes())}:${p2t(d.getSeconds())}`;
+    document.querySelectorAll('.autosave').forEach(e => { e.textContent = `✓ 자동 저장됨 ${t}`; e.classList.add('on'); });
+  };
+}
+// 기록 칸에 쓰던 글: 누르기 전에도 이 기기에 바로 저장, 다시 열면 그대로
+function draftBind(id, key){
+  const el = $(id); if (!el || el.dataset.draft) return;
+  el.dataset.draft = 1;
+  const k = 'ywb-draft-' + key;
+  try { const v = localStorage.getItem(k); if (v && !el.value) el.value = v; } catch (e){}
+  el.addEventListener('input', () => {
+    try { if (el.value.trim()) localStorage.setItem(k, el.value); else localStorage.removeItem(k); } catch (e){}
+    document.querySelectorAll('.autosave').forEach(e => { e.textContent = '✓ 쓰는 중인 글 임시 저장됨'; e.classList.add('on'); });
+  });
+}
+function draftClear(key){ try { localStorage.removeItem('ywb-draft-' + key); } catch (e){} }
+{
+  // 아이 기록(학급 체크)
+  const _rn = renderNotes;
+  renderNotes = function(){
+    _rn();
+    if (!$('noteIn')) return;
+    draftBind('noteIn', 'note');
+    const add = $('noteAdd').onclick;
+    const fin = () => { const had = $('noteIn').value.trim(); add(); if (had) draftClear('note'); };
+    $('noteAdd').onclick = fin;
+    $('noteIn').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) fin(); };
+    if (!$('noteBox').querySelector('.autosave')) $('noteIn').parentElement.insertAdjacentHTML('afterend', '<p class="autosave">입력하는 즉시 자동 저장돼요</p>');
+  };
+}
+{
+  // 교무수첩 하루
+  const _rnb = renderNb;
+  renderNb = function(){
+    _rnb.apply(this, arguments);
+    if ($('nbNoteIn')){
+      draftBind('nbNoteIn', 'nb');
+      const add = $('nbNoteAdd').onclick;
+      const fin = () => { const had = $('nbNoteIn').value.trim(); add(); if (had) draftClear('nb'); };
+      $('nbNoteAdd').onclick = fin;
+      $('nbNoteIn').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) fin(); };
+    }
+    // 서명칸 넣기 선택
+    const sg = $('nbSignChk'); if (sg) sg.checked = cfg().nbSign !== false;
+  };
+}
+if ($('nbFoot') && !$('nbFoot').querySelector('.autosave')) $('nbWeekInfo').insertAdjacentHTML('afterend', '<span class="autosave">✓ 입력하는 즉시 자동 저장</span>');
+if ($('nbOut') && !$('nbSignChk')) $('nbOut').insertAdjacentHTML('afterbegin', '<label class="nb-sign-opt" title="엑셀로 저장하거나 인쇄할 때 맨 아래에 작성일·교사 서명(인) 칸을 넣어요"><input type="checkbox" id="nbSignChk" checked> 서명칸 넣기</label>');
+$('nbSignChk').onchange = e => { S.cfg = S.cfg || {}; S.cfg.nbSign = e.target.checked; save(); if (NB.open && NB.tab === 'week') renderNb(); };
+{
+  // 휴대폰: 아이 기록 쓰던 글
+  const _rm = renderMob;
+  renderMob = function(){
+    _rm.apply(this, arguments);
+    if ($('mbNoteIn')){
+      draftBind('mbNoteIn', 'mob');
+      const add = $('mbNoteAdd').onclick;
+      $('mbNoteAdd').onclick = () => { const had = $('mbNoteIn').value.trim(); add(); if (had) draftClear('mob'); };
+    }
+  };
+}
+/* ===== 교무수첩 주간 기록 메일로 보내기 ===== */
+function nbWeekFile(){
+  const x = nbWeekSheets(), f = x.first, l = new Date(f); l.setDate(f.getDate() + 4);
+  return {
+    sheets:x.sheets,
+    name:`교무수첩_${f.getFullYear()}년_${p2(f.getMonth() + 1)}월${p2(f.getDate())}일~${p2(l.getMonth() + 1)}월${p2(l.getDate())}일.xlsx`,
+    span:`${f.getFullYear()}년 ${f.getMonth() + 1}월 ${f.getDate()}일 ~ ${l.getMonth() + 1}월 ${l.getDate()}일`,
+  };
+}
+const nbB64 = blob => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = no; r.readAsDataURL(blob); });
+function nbMailOpen(o){
+  $('nbMailBox').hidden = !o;
+  if (o){ $('nbMailTo').value = cfg().nbMail || ''; $('nbMailMsg').textContent = ''; $('nbMailMsg').className = 'nb-mail-msg';
+    $('nbMailHow').textContent = SY.url && SY.key ? '선생님 구글 계정에서 엑셀 파일을 붙여 바로 보내고, 구글 드라이브 ‘교무수첩_보관’ 폴더에도 남겨요.' : '완전 동기화가 연결되어 있지 않아 메일 앱으로 보내요. 엑셀 파일을 내려받은 뒤 메일 창이 열려요.';
+    $('nbMailTo').focus(); }
+}
+async function nbMailSend(){
+  const W = nbWeekFile(), blob = XL.book(W.sheets), to = $('nbMailTo').value.trim(), msg = $('nbMailMsg');
+  S.cfg = S.cfg || {}; S.cfg.nbMail = to; save();
+  const now = new Date().toLocaleString('ko-KR');
+  const subject = `[교무수첩] ${W.span} 주간 기록`;
+  const body = `${cfg().sub ? cfg().sub + ' ' : ''}교무수첩 주간 기록입니다.\n기간: ${W.span}\n보낸 시각: ${now}\n\n이 메일은 기록을 보관하려고 학급 칠판에서 보냈습니다. 첨부한 엑셀 파일이 이 주의 기록입니다.`;
+  const ok = t => { msg.className = 'nb-mail-msg ok'; msg.textContent = t; };
+  const bad = t => { msg.className = 'nb-mail-msg bad'; msg.textContent = t; };
+  $('nbMailGo').disabled = true; msg.className = 'nb-mail-msg'; msg.textContent = '보내는 중…';
+  try {
+    if (SY.url && SY.key){
+      const r = await syCall({action:'mail', to, subject, body, name:W.name, b64:await nbB64(blob)});
+      if (r && r.ok){ ok(`✓ ${r.to}로 보냈어요 (${now}) · 구글 드라이브 ‘교무수첩_보관’에도 저장됨`); return; }
+      if (r && r.error === 'unknown_action'){ bad('동기화 저장소 코드가 예전 것이라 메일을 보낼 수 없어요. 관리 → 기록 지키기 → 완전 동기화에서 새 코드를 복사해 Apps Script에 붙여 넣고, 배포 → 배포 관리 → 새 버전으로 다시 배포해 주세요.'); return; }
+      if (r && r.error && r.error !== 'network'){ bad(`메일을 보내지 못했어요 (${r.error}). Apps Script를 다시 배포할 때 메일 보내기 권한을 허용했는지 확인해 주세요.`); return; }
+      // 인터넷 문제면 아래 방법으로
+    }
+    const file = new File([blob], W.name, {type:blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    if (MOB && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:subject, text:body});
+      ok('공유 창에서 메일 앱을 골라 보내 주세요.'); return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = W.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n※ 내려받은 엑셀 파일(' + W.name + ')을 첨부해 주세요.')}`;
+    ok(`엑셀 파일을 내려받았어요. 열린 메일 창에 ‘${W.name}’을 첨부해서 보내 주세요.`);
+  } catch (e){ bad('보내지 못했어요. 다시 눌러 주세요.'); }
+  finally { $('nbMailGo').disabled = false; }
+}
+if ($('nbXlsx') && !$('nbMail')){
+  $('nbXlsx').insertAdjacentHTML('afterend', '<button class="mini" id="nbMail" type="button" title="이 주 기록을 엑셀 파일로 붙여 메일로 보내요">메일로 보내기</button>');
+  $('nbLock').insertAdjacentHTML('beforebegin', `<div class="nb-mail" id="nbMailBox" hidden>
+    <b>이 주 기록 메일로 보내기</b>
+    <input class="inp" id="nbMailTo" type="email" placeholder="받을 메일 주소 (비우면 연결된 구글 계정으로)" aria-label="받을 메일 주소">
+    <button class="b go" id="nbMailGo" type="button">보내기</button><button class="mini" id="nbMailX" type="button">닫기</button>
+    <p class="nb-mail-how" id="nbMailHow"></p><p class="nb-mail-msg" id="nbMailMsg" role="status"></p></div>`);
+}
+$('nbMail').onclick = () => { if (NB.tab !== 'week'){ NB.tab = 'week'; renderNb(); } nbMailOpen($('nbMailBox').hidden); };
+$('nbMailX').onclick = () => nbMailOpen(false);
+$('nbMailGo').onclick = nbMailSend;
+$('nbMailTo').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) nbMailSend(); };
+{ const _lk = nbLock; nbLock = function(){ _lk.apply(this, arguments); if ($('nbMailBox')) $('nbMailBox').hidden = true; }; }
 /* ===== 처음 설정: 학교 · 반 · 날씨 지역 ===== */
 const SU = {pick:null, place:null};
 const suShort = n => String(n || '').replace(/등학교$/, '').replace(/학교$/, '');
