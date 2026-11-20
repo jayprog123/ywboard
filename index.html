@@ -1671,7 +1671,8 @@ function handle_(p) {
   }
   if (p.action === 'mail') {
     // 교무수첩 주간 기록: 선생님 구글 계정에서 메일로 보내고, 드라이브 '교무수첩_보관' 폴더에도 남겨요.
-    const to = String(p.to || Session.getEffectiveUser().getEmail());
+    const to = String(p.to || '').trim();
+    if (!to) return out_({ ok: false, error: 'no_to' });
     const blob = Utilities.newBlob(Utilities.base64Decode(p.b64 || ''), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', p.name || '교무수첩.xlsx');
     const saved = mailFolder_().createFile(blob);
     MailApp.sendEmail({ to: to, subject: p.subject || '교무수첩 주간 기록', body: (p.body || '') + '\n\n구글 드라이브 보관: ' + saved.getUrl(), attachments: [blob] });
@@ -5044,6 +5045,7 @@ function nbMailOpen(o){
 }
 async function nbMailSend(alt){
   const W = nbWeekFile(), blob = XL.book(W.sheets), to = $('nbMailTo').value.trim(), msg = $('nbMailMsg');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){ msg.className = 'nb-mail-msg bad'; msg.textContent = '받을 메일 주소를 넣어 주세요. (예: 이름@naver.com)'; $('nbMailTo').focus(); return; }
   S.cfg = S.cfg || {}; S.cfg.nbMail = to; save();
   const now = new Date().toLocaleString('ko-KR');
   const subject = `[교무수첩] ${W.span} 주간 기록`;
@@ -5077,7 +5079,7 @@ if ($('nbXlsx') && !$('nbMail')){
   $('nbXlsx').insertAdjacentHTML('afterend', '<button class="mini" id="nbMail" type="button" title="이 주 기록을 엑셀 파일로 붙여 메일로 보내요">메일로 보내기</button>');
   $('nbLock').insertAdjacentHTML('beforebegin', `<div class="nb-mail" id="nbMailBox" hidden>
     <b>이 주 기록 메일로 보내기</b>
-    <input class="inp" id="nbMailTo" type="email" placeholder="받을 메일 주소 (비우면 연결된 구글 계정으로)" aria-label="받을 메일 주소">
+    <input class="inp" id="nbMailTo" type="email" placeholder="받을 메일 주소 (예: 이름@naver.com)" aria-label="받을 메일 주소">
     <button class="b go" id="nbMailGo" type="button">보내기</button><button class="mini" id="nbMailAlt" type="button" hidden>메일 앱으로 보내기</button><button class="mini" id="nbMailX" type="button">닫기</button>
     <p class="nb-mail-how" id="nbMailHow"></p><p class="nb-mail-msg" id="nbMailMsg" role="status"></p></div>`);
 }
