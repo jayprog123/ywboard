@@ -1129,6 +1129,16 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 .ct-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .ct-form .inp{width:100%; min-width:0; box-sizing:border-box}
 .ct-card{min-width:0; overflow:hidden}
+/* 비상 연락망 엑셀 올리기 */
+.ct-up-tip{margin:-4px 0 10px; font-size:12.5px; color:var(--ink-3)}
+.ct-imp{border:1px solid var(--teal); background:var(--teal-soft); border-radius:12px; padding:10px 14px; margin:0 0 10px; font-size:14px}
+.ct-imp p{margin:0 0 6px}
+.ct-imp-bad{color:#b4231a}
+.ct-imp-list{margin:4px 0 8px; padding:0 0 0 1.1em; max-height:180px; overflow:auto; font-size:13px; color:var(--ink-2)}
+.ct-imp-how{font-size:12.5px; color:var(--ink-2)}
+.ct-imp-btns{display:flex; gap:8px}
+.ct-imp-btns .b{font-size:14px; padding:.4em 1.2em}
+@media print{ .ct-imp, .ct-up-tip{display:none!important} }
 /* ===== 처음 설정 ===== */
 #suDlg{position:fixed; inset:0; z-index:47; background:rgba(28,43,37,.45); display:flex; align-items:center; justify-content:center; padding:16px}
 .su-dlg{width:min(860px,96vw); max-height:94vh; gap:10px}
@@ -5228,6 +5238,124 @@ if (MOB){
     document.querySelector('.mob-date').hidden = ct || (MS.seg === 'nb' && !NB.open);
     if ($('mbNbXlsx')) $('mbNbXlsx').hidden = ct;
     return r;
+  };
+}
+/* ===== 비상 연락망: 엑셀(.xlsx) · CSV 파일 올리기 ===== */
+// 작은 xlsx 읽기: zip을 풀고(브라우저 내장 압축 풀기) 첫 시트의 칸을 표로
+async function xlsxRows(buf){
+  const u = new Uint8Array(buf), dv = new DataView(buf), dec = new TextDecoder();
+  let e = u.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('zip');
+  const cnt = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const files = {};
+  for (let i = 0; i < cnt; i++){
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    files[dec.decode(u.subarray(p + 46, p + 46 + nlen))] = {method, csize, off}; p += 46 + nlen + xlen + clen;
+  }
+  const read = async name => { const f = files[name]; if (!f) return '';
+    const start = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true), data = u.subarray(start, start + f.csize);
+    if (f.method === 0) return dec.decode(data);
+    const ds = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return dec.decode(await new Response(ds).arrayBuffer()); };
+  const X = s => new DOMParser().parseFromString(s, 'application/xml');
+  const ss = [...X(await read('xl/sharedStrings.xml')).getElementsByTagName('si')].map(si => [...si.getElementsByTagName('t')].map(t => t.textContent).join(''));
+  // 첫 번째 시트 찾기
+  let sheet = 'xl/worksheets/sheet1.xml';
+  try {
+    const wb = X(await read('xl/workbook.xml')), first = wb.getElementsByTagName('sheet')[0], rid = first && (first.getAttribute('r:id') || first.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id'));
+    const rel = [...X(await read('xl/_rels/workbook.xml.rels')).getElementsByTagName('Relationship')].find(r => r.getAttribute('Id') === rid);
+    if (rel){ const t = rel.getAttribute('Target').replace(/^\/?(xl\/)?/, ''); if (files['xl/' + t]) sheet = 'xl/' + t; }
+  } catch (er){}
+  if (!files[sheet]) sheet = Object.keys(files).filter(n => /^xl\/worksheets\/[^/]+\.xml$/.test(n)).sort()[0];
+  const rows = [];
+  [...X(await read(sheet)).getElementsByTagName('c')].forEach(c => {
+    const ref = c.getAttribute('r') || '', m = ref.match(/^([A-Z]+)(\d+)$/); if (!m) return;
+    const col = [...m[1]].reduce((a, ch) => a * 26 + ch.charCodeAt(0) - 64, 0) - 1, row = +m[2] - 1, t = c.getAttribute('t');
+    const v = c.getElementsByTagName('v')[0], is = c.getElementsByTagName('is')[0];
+    let val = t === 's' ? ss[+(v && v.textContent)] : t === 'inlineStr' ? (is ? [...is.getElementsByTagName('t')].map(x => x.textContent).join('') : '') : (v ? v.textContent : '');
+    (rows[row] = rows[row] || [])[col] = val == null ? '' : String(val);
+  });
+  return Array.from(rows, r => Array.from(r || [], x => (x || '').trim()));
+}
+function csvRows(text){
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++){ const ch = text[i];
+    if (q){ if (ch === '"'){ if (text[i + 1] === '"'){ cur += '"'; i++; } else q = false; } else cur += ch; }
+    else if (ch === '"') q = true; else if (ch === ',' || ch === '\t'){ row.push(cur.trim()); cur = ''; }
+    else if (ch === '\n' || ch === '\r'){ if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cur.trim()); rows.push(row); row = []; cur = ''; }
+    else cur += ch; }
+  if (cur || row.length){ row.push(cur.trim()); rows.push(row); }
+  return rows;
+}
+async function ctFileRows(file){
+  const buf = await file.arrayBuffer();
+  if (/\.xlsx$/i.test(file.name) || new Uint8Array(buf.slice(0, 2)).join() === '80,75') return xlsxRows(buf);
+  let text = new TextDecoder('utf-8').decode(buf);
+  if (text.includes('�')){ try{ text = new TextDecoder('euc-kr').decode(buf); }catch(e){} } // 한글 엑셀이 저장한 CSV
+  return csvRows(text.replace(/^﻿/, ''));
+}
+// 머리줄을 찾아 칸 뜻 맞추기 (우리 연락망 엑셀은 그대로, 다른 양식도 낱말로 짐작)
+function ctMapRows(rows){
+  const norm = s => String(s || '').replace(/\s/g, '');
+  let hi = rows.findIndex(r => r && r.some(c => /^(이름|성명|학생명?|학생이름)$/.test(norm(c))));
+  if (hi < 0) hi = rows.findIndex(r => r && r.some(c => /^번호$/.test(norm(c))));
+  if (hi < 0) return {err:'머리줄(이름 · 번호 칸)을 찾지 못했어요. 첫 줄에 ‘번호’, ‘이름’, ‘연락처’처럼 칸 이름을 적어 주세요.'};
+  const H = rows[hi].map(norm), map = {}; let rel = 0, ph = 0;
+  H.forEach((h, i) => {
+    if (!h) return;
+    if (map.n == null && /^(번호|학생번호|출석번호|번)$/.test(h)) map.n = i;
+    else if (map.name == null && /^(이름|성명|학생명?|학생이름)$/.test(h)) map.name = i;
+    else if (/연락처|전화|휴대|핸드폰|폰|번호/.test(h)){ if (ph < 2) map['p' + (++ph)] = i; }
+    else if (/보호자|관계|부모|학부모/.test(h)){ if (rel < 2) map['r' + (++rel)] = i; }
+    else if (map.lang == null && /쓰는말|언어|사용언어|모국어/.test(h)) map.lang = i;
+    else if (map.m == null && /메모|비고|참고|특이/.test(h)) map.m = i;
+  });
+  if (map.n == null && map.name == null) return {err:'‘번호’나 ‘이름’ 칸이 있어야 어느 아이인지 알 수 있어요.'};
+  const R = sorted(), byName = new Map(R.map(k => [norm(k.name), k.n])), out = [], miss = [];
+  const fixPh = v => { let d = String(v || '').replace(/[^\d]/g, ''); if (/^1\d{8,9}$/.test(d)) d = '0' + d; return d ? ctPhone(d) : String(v || '').trim(); };
+  rows.slice(hi + 1).forEach((r, i) => {
+    if (!r || !r.some(c => c)) return;
+    const name = map.name != null ? (r[map.name] || '') : '', num = map.n != null ? parseInt(r[map.n], 10) : NaN;
+    let n = !isNaN(num) && R.some(k => k.n === num) ? num : byName.get(norm(name));
+    if (!n){ if (name || !isNaN(num)) miss.push(`${hi + i + 2}번째 줄 ${isNaN(num) ? '' : num + '번 '}${name}`.trim()); return; }
+    const c = {}; CT_F.forEach(([f]) => { if (map[f] == null) return; const v = (r[map[f]] || '').trim(); if (v) c[f] = f[0] === 'p' ? fixPh(v) : v; });
+    if (Object.keys(c).length) out.push({n, name:(R.find(k => k.n === n) || {}).name || name, c});
+  });
+  return {out, miss, cols:CT_F.filter(([f]) => map[f] != null).map(([, l]) => l)};
+}
+const CTI = {res:null};
+function ctImportView(){
+  const box = $('ctImp'); if (!box) return;
+  const r = CTI.res; if (!r){ box.hidden = true; return; }
+  box.hidden = false;
+  if (r.err){ box.innerHTML = `<p class="ct-imp-bad">${esc(r.err)}</p><button class="mini" type="button" id="ctImpX">닫기</button>`; $('ctImpX').onclick = () => { CTI.res = null; ctImportView(); }; return; }
+  box.innerHTML = `<p><b>${r.out.length}명</b>의 연락처를 읽었어요. 읽은 칸: ${esc(r.cols.join(', ') || '없음')}</p>
+    ${r.miss.length ? `<p class="ct-imp-bad">명단에서 찾지 못한 줄 ${r.miss.length}개: ${esc(r.miss.slice(0, 6).join(' · '))}${r.miss.length > 6 ? ' …' : ''}<br><small>번호나 이름이 우리 반 명단과 같은지 확인해 주세요.</small></p>` : ''}
+    <ul class="ct-imp-list">${r.out.slice(0, 40).map(x => `<li><b>${x.n}. ${esc(String(x.name).trim())}</b> ${esc([x.c.r1, x.c.p1, x.c.r2, x.c.p2, x.c.lang].filter(Boolean).join(' · '))}</li>`).join('')}</ul>
+    <p class="ct-imp-how">빈 칸은 지금 적힌 내용을 그대로 두고, 값이 있는 칸만 새로 바꿔요.</p>
+    <div class="ct-imp-btns"><button class="b go" type="button" id="ctImpGo" ${r.out.length ? '' : 'disabled'}>연락망에 넣기</button><button class="b" type="button" id="ctImpX">그만두기</button></div>`;
+  $('ctImpX').onclick = () => { CTI.res = null; ctImportView(); };
+  $('ctImpGo').onclick = () => {
+    const all = ctAll(); r.out.forEach(({n, c}) => { all[n] = Object.assign({}, all[n], c); }); save();
+    const k = r.out.length; CTI.res = null; renderNbContact(); bubble(`${k}명의 연락처를 넣었어요`, '', 3000);
+  };
+}
+// 연락망 화면에 '엑셀 올리기' 버튼과 미리보기 자리
+{ const _rc = renderNbContact;
+  renderNbContact = function(){
+    _rc.apply(this, arguments);
+    const head = $('nbBox').querySelector('.ct-head'); if (!head) return;
+    head.insertAdjacentHTML('beforeend', `<button class="mini" id="ctUp" type="button" title="엑셀(.xlsx)이나 CSV 파일에서 연락처를 한꺼번에 불러와요">엑셀 올리기</button><input type="file" id="ctFile" accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden>`);
+    head.insertAdjacentHTML('afterend', `<div class="ct-imp" id="ctImp" hidden></div>
+      <p class="ct-up-tip">처음에는 ‘엑셀로 저장’으로 양식을 받아 채운 뒤 ‘엑셀 올리기’로 넣으면 편해요. 학교에서 쓰던 연락망 엑셀도 ‘번호’나 ‘이름’ 칸이 있으면 읽을 수 있어요.</p>`);
+    if (MOB) $('nbBox').querySelector('.ct-up-tip').remove();
+    $('ctUp').onclick = () => $('ctFile').click();
+    $('ctFile').onchange = async e => {
+      const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+      try { CTI.res = ctMapRows(await ctFileRows(f)); }
+      catch (er){ CTI.res = {err:'파일을 읽지 못했어요. 엑셀에서 ‘다른 이름으로 저장 → Excel 통합 문서(.xlsx)’로 저장한 뒤 다시 올려 주세요.'}; }
+      ctImportView(); nbArm();
+    };
+    ctImportView();
   };
 }
 /* ===== 처음 설정: 학교 · 반 · 날씨 지역 ===== */
