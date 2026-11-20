@@ -1081,6 +1081,54 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 .nb-mail-msg.ok{color:var(--teal); font-weight:600}
 .nb-mail-msg.bad{color:#b4231a}
 @media print{ .nb-mail{display:none!important} }
+/* 교무수첩: 비상 연락망 */
+.nb-ct #nbNav, .nb-ct #nbOut, .nb-ct #nbMailBox{display:none!important}
+.ct-head{display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin:0 0 10px}
+.ct-head h4{margin:0; font-family:var(--display); font-size:1.15em}
+.ct-head h4 small{font-family:var(--body, inherit); font-size:.72em; color:var(--ink-3); margin-left:.4em; font-weight:400}
+.ct-note{margin:.25em 0 0; font-size:.85em; color:var(--ink-2)}
+.ct-wrap{overflow:auto; border:1px solid var(--line-soft); border-radius:12px}
+.ct-table{width:100%; border-collapse:collapse; font-size:14px}
+.ct-table th, .ct-table td{border-bottom:1px solid var(--line-soft); padding:4px 6px; text-align:left; vertical-align:middle}
+.ct-table thead th{position:sticky; top:0; background:var(--teal-soft); font-weight:600; font-size:13px; white-space:nowrap; z-index:1}
+.ct-table tbody th{white-space:nowrap; font-weight:600; color:var(--ink)}
+.ct-table tbody th.nm{min-width:5em}
+.ct-table tbody tr:nth-child(even){background:#fafcfb}
+.ct-table .inp{width:100%; min-width:7em; font-size:14px; padding:.35em .5em}
+.ct-table td:nth-child(8) .inp, .ct-table td:nth-child(7) .inp{min-width:10em}
+.ct-print, .ct-print-foot{display:none}
+/* 휴대폰 카드 */
+.ct-q{width:100%; margin:0 0 10px; font-size:16px}
+.ct-cards{display:flex; flex-direction:column; gap:8px}
+.ct-card{border:1px solid var(--line-soft); border-radius:14px; padding:10px 12px; background:#fff}
+.ct-card.on{border-color:var(--teal); box-shadow:0 0 0 3px var(--teal-soft)}
+.ct-top{display:flex; align-items:center; gap:8px}
+.ct-top b{font-size:16px}
+.ct-lang{font-size:12px; background:#fff4d6; color:#7a5a00; border-radius:999px; padding:.15em .7em}
+.ct-call{display:flex; align-items:center; gap:8px; margin-top:8px}
+.ct-who{font-size:13px; color:var(--ink-2); min-width:4.2em}
+.ct-num{flex:1; font-size:15px; font-variant-numeric:tabular-nums}
+.ct-call .b{padding:.4em 1em; font-size:14px; text-decoration:none}
+.ct-memo{margin:8px 0 0; font-size:13px; color:var(--ink-2); background:#f6f8f7; border-radius:8px; padding:.4em .7em}
+.ct-empty{margin:8px 0 0; font-size:13px; color:var(--ink-3)}
+.ct-form{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px}
+.ct-form label{display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--ink-2)}
+.ct-form .inp{font-size:16px}
+/* 인쇄: 입력칸 대신 깔끔한 표 */
+.printing-nb .ct-edit, .printing-nb .ct-wrap, .printing-nb .ct-head .mini{display:none!important}
+.printing-nb .ct-print{display:table; font-size:9.5pt}
+.printing-nb .ct-print th, .printing-nb .ct-print td{border:1px solid #9aa8a2; padding:4pt 5pt}
+.printing-nb .ct-print-foot{display:block}
+@media print{ .ct-note{display:none} }
+.nb-ct .nb-box{display:block!important; overflow:auto}
+.ct-head .sp, .ct-top .sp{flex:1}
+.ct-head .mini{align-self:center}
+.ct-call a.b{color:inherit}
+.ct-call a.b.go{color:#fff}
+.ct-top .b{font-size:14px; padding:.4em 1em}
+.ct-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.ct-form .inp{width:100%; min-width:0; box-sizing:border-box}
+.ct-card{min-width:0; overflow:hidden}
 /* ===== 처음 설정 ===== */
 #suDlg{position:fixed; inset:0; z-index:47; background:rgba(28,43,37,.45); display:flex; align-items:center; justify-content:center; padding:16px}
 .su-dlg{width:min(860px,96vw); max-height:94vh; gap:10px}
@@ -1511,7 +1559,7 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
     <div class="yr-list">
       <label class="yr-item"><input type="checkbox" id="yrRec" checked><span><b>학생 기록</b><small>출결, 학급 체크, 아이 기록, 칭찬 별, 뽑기 순서, 교무수첩에 적은 내용</small></span></label>
       <label class="yr-item"><input type="checkbox" id="yrPlan" checked><span><b>일정과 시간표</b><small>달력 일정, 주간 일정, 날짜별 시간표, 알림장, 디데이, 메모장</small></span></label>
-      <label class="yr-item"><input type="checkbox" id="yrClass" checked><span><b>우리 반 명단과 역할</b><small>학생 이름, 1인 1역 담당 학생, 자리 배치, 모둠 점수, 뽑기 빼기·미루기</small></span></label>
+      <label class="yr-item"><input type="checkbox" id="yrClass" checked><span><b>우리 반 명단과 역할</b><small>학생 이름, 1인 1역 담당 학생, 자리 배치, 모둠 점수, 뽑기 빼기·미루기, 비상 연락망</small></span></label>
     </div>
     <p class="yr-keep">그대로 두는 것: 학교와 날씨 지역, 시정표, 화면 배치, 설정, 1인 1역 역할 이름, 완전 동기화 연결, 교무수첩 비밀번호</p>
     <label class="yr-ok"><input type="checkbox" id="yrSure"> 고른 기록을 비우면 화면에서 되돌릴 수 없다는 것을 알아요</label>
@@ -4883,7 +4931,7 @@ $('yrGo').onclick = () => {
     delete S.neisCal;
   }
   if ($('yrClass').checked){
-    S.names = {}; S.pickRule = {};
+    S.names = {}; S.pickRule = {}; if (S.nb) delete S.nb.contacts;
     (S.cleaning || []).forEach(c => c.w = '');
     if (S.seat){ delete S.seat.map; S.seat.fix = {}; S.seat.avoid = []; }
     if (S.teams){ S.teams.score = []; }
@@ -5089,6 +5137,99 @@ $('nbMailGo').onclick = () => nbMailSend(false);
 $('nbMailAlt').onclick = () => nbMailSend(true);
 $('nbMailTo').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) nbMailSend(false); };
 { const _lk = nbLock; nbLock = function(){ _lk.apply(this, arguments); if ($('nbMailBox')) $('nbMailBox').hidden = true; }; }
+/* ===== 교무수첩: 비상 연락망 (선생님만, 비밀번호로 잠김 · 휴대폰에서 바로 전화) ===== */
+const CT_F = [['r1', '보호자 1', '관계 (예: 어머니)'], ['p1', '연락처 1', '010-0000-0000'], ['r2', '보호자 2', '관계 (예: 아버지)'], ['p2', '연락처 2', '010-0000-0000'], ['lang', '쓰는 말', '예: 베트남어, 통역 필요'], ['m', '메모', '예: 오후 6시 뒤 통화 가능']];
+const ctAll = () => (nbData().contacts = nbData().contacts || {});
+const ctOf = n => ctAll()[n] || {};
+function ctSet(n, f, v){
+  const all = ctAll(), c = Object.assign({}, all[n]);
+  if (String(v).trim()) c[f] = String(v).trim(); else delete c[f];
+  if (Object.keys(c).length) all[n] = c; else delete all[n];
+  save();
+}
+const ctDigits = v => String(v || '').replace(/[^\d+]/g, '');
+function ctPhone(v){ // 010-1234-5678 꼴로 보기 좋게
+  const d = ctDigits(v);
+  if (/^01\d{8,9}$/.test(d)) return d.length === 10 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  if (/^02\d{7,8}$/.test(d)) return d.length === 9 ? `02-${d.slice(2, 5)}-${d.slice(5)}` : `02-${d.slice(2, 6)}-${d.slice(6)}`;
+  if (/^0\d{9,10}$/.test(d)) return d.length === 10 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  return String(v || '').trim();
+}
+const CT = {q:'', edit:null};
+function ctCallBtns(c){
+  return [['r1', 'p1'], ['r2', 'p2']].filter(([, p]) => c[p]).map(([r, p]) => `<div class="ct-call"><span class="ct-who">${esc(c[r] || '보호자')}</span><span class="ct-num">${esc(ctPhone(c[p]))}</span>
+    <a class="b go" href="tel:${esc(ctDigits(c[p]))}">전화</a><a class="b" href="sms:${esc(ctDigits(c[p]))}">문자</a></div>`).join('');
+}
+function renderNbContact(){
+  document.querySelectorAll('[data-nbt]').forEach(b => b.classList.toggle('on', b.dataset.nbt === 'contact'));
+  $('nbDlg').classList.add('nb-ct'); $('nbBox').classList.remove('nb-week');
+  if ($('nbMailBox')) $('nbMailBox').hidden = true;
+  $('nbWeekInfo').textContent = '비상 연락망은 선생님만 볼 수 있어요. 교무수첩 비밀번호로 잠겨요.';
+  const R = sorted(), filled = R.filter(({n}) => Object.keys(ctOf(n)).length).length;
+  const head = `<div class="ct-head"><div><h4>비상 연락망 <small>${filled}/${R.length}명 적음</small></h4>
+      <p class="ct-note">선생님만 보는 정보예요. 교무수첩 비밀번호로 잠기고, 동기화하면 선생님 구글 드라이브에만 저장돼요.</p></div>
+      <span class="sp"></span>${MOB ? '' : '<button class="mini go" id="ctXlsx" type="button">엑셀로 저장</button><button class="mini" id="ctPrint" type="button">인쇄</button>'}</div>`;
+  if (MOB){
+    const q = CT.q.trim();
+    const list = R.filter(({n, name}) => !q || name.includes(q) || String(n) === q);
+    $('nbBox').innerHTML = head + `<input class="inp ct-q" id="ctQ" type="search" placeholder="이름이나 번호로 찾기" value="${esc(CT.q)}">
+      <div class="ct-cards">${list.map(({n, name}) => { const c = ctOf(n);
+        if (CT.edit === n) return `<div class="ct-card on"><div class="ct-top"><b>${n}. ${esc(name.trim())}</b><span class="sp"></span><button class="b go" type="button" data-ctdone>다 적었어요</button></div>
+          <div class="ct-form">${CT_F.map(([f, l, ph]) => `<label>${l}<input class="inp" data-ctf="${f}" data-ctn="${n}" value="${esc(f[0] === 'p' ? ctPhone(c[f]) : c[f] || '')}" placeholder="${ph}" ${f[0] === 'p' ? 'type="tel" inputmode="tel"' : ''}></label>`).join('')}</div></div>`;
+        const calls = ctCallBtns(c);
+        return `<div class="ct-card"><div class="ct-top"><b>${n}. ${esc(name.trim())}</b>${c.lang ? `<span class="ct-lang">${esc(c.lang)}</span>` : ''}<span class="sp"></span><button class="mini" type="button" data-ctedit="${n}">고치기</button></div>
+          ${calls || '<p class="ct-empty">아직 연락처가 없어요. ‘고치기’를 눌러 적어 주세요.</p>'}${c.m ? `<p class="ct-memo">${esc(c.m)}</p>` : ''}</div>`; }).join('') || '<p class="ct-empty">찾는 아이가 없어요.</p>'}</div>`;
+    $('ctQ').oninput = e => { CT.q = e.target.value; const p = e.target.selectionStart; renderNbContact(); const i = $('ctQ'); i.focus(); try{ i.setSelectionRange(p, p); }catch(er){} };
+    $('nbBox').querySelectorAll('[data-ctedit]').forEach(b => b.onclick = () => { CT.edit = +b.dataset.ctedit; renderNbContact(); const f = $('nbBox').querySelector('[data-ctf]'); if (f) f.focus(); });
+    $('nbBox').querySelectorAll('[data-ctdone]').forEach(b => b.onclick = () => { CT.edit = null; renderNbContact(); });
+  } else {
+    $('nbBox').innerHTML = head + `<div class="ct-wrap"><table class="ct-table ct-edit"><thead><tr><th>번호</th><th>이름</th>${CT_F.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>
+      ${R.map(({n, name}) => { const c = ctOf(n); return `<tr><th>${n}</th><th class="nm">${esc(name.trim())}</th>${CT_F.map(([f, , ph]) => `<td><input class="inp" data-ctf="${f}" data-ctn="${n}" value="${esc(f[0] === 'p' ? ctPhone(c[f]) : c[f] || '')}" placeholder="${ph}" aria-label="${n}번 ${CT_F.find(x => x[0] === f)[1]}" ${f[0] === 'p' ? 'type="tel"' : ''}></td>`).join('')}</tr>`; }).join('')}
+      </tbody></table></div>
+      <table class="ct-table ct-print"><thead><tr><th>번호</th><th>이름</th>${CT_F.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>
+      ${R.map(({n, name}) => { const c = ctOf(n); return `<tr><td>${n}</td><td>${esc(name.trim())}</td>${CT_F.map(([f]) => `<td>${esc(f[0] === 'p' ? ctPhone(c[f]) : c[f] || '')}</td>`).join('')}</tr>`; }).join('')}
+      </tbody></table><p class="rp-foot ct-print-foot">${esc(cfg().sub || '')} 비상 연락망 · ${new Date().toLocaleDateString('ko-KR')} 출력 · 개인정보이니 보관에 주의해 주세요.</p>`;
+    $('ctXlsx').onclick = ctXlsx;
+    $('ctPrint').onclick = () => { document.body.classList.add('printing-nb'); setTimeout(() => window.print(), 60); };
+  }
+  $('nbBox').querySelectorAll('[data-ctf]').forEach(i => {
+    i.oninput = () => { ctSet(+i.dataset.ctn, i.dataset.ctf, i.value); nbArm(); };
+    if (i.dataset.ctf[0] === 'p') i.onblur = () => { const v = ctPhone(i.value); if (v !== i.value){ i.value = v; ctSet(+i.dataset.ctn, i.dataset.ctf, v); } };
+  });
+}
+function ctXlsx(){
+  const R = sorted(), n = 2 + CT_F.length, T = xlTop(`${cfg().sub} 비상 연락망`, [`${new Date().toLocaleDateString('ko-KR')} 기준 · 개인정보이니 보관에 주의해 주세요.`], n), r = T.rows, heights = T.heights;
+  heights[r.length] = 28; r.push(['번호', '이름'].concat(CT_F.map(([, l]) => l)).map(v => ({v, s:1})));
+  const head = r.length;
+  R.forEach(({n: no, name}, i) => { const c = ctOf(no), z = i % 2; heights[r.length] = 26;
+    r.push([{v:no, s:z ? 8 : 5}, {v:name.trim(), s:z ? 8 : 5}].concat(CT_F.map(([f]) => ({v:f[0] === 'p' ? ctPhone(c[f]) : c[f] || '', s:z ? 7 : 0})))); });
+  heights[r.length] = 20; r.push([{v:'용원칠판 © 2026 정예훈(개굴정)', s:11}]);
+  XL.save(`비상연락망_${dkey()}.xlsx`, [{name:'비상 연락망', widths:[7, 11, 12, 17, 12, 17, 18, 26], rows:r, heights, merges:T.merges, landscape:true, onePage:true, freeze:[2, head]}]);
+}
+// 하루 · 주간 · 비상 연락망 탭
+$('nbTabs').insertAdjacentHTML('beforeend', '<button type="button" data-nbt="contact">비상 연락망</button>');
+document.querySelector('[data-nbt="contact"]').onclick = () => { NB.tab = 'contact'; renderNb(); };
+{ const _rn = renderNb;
+  renderNb = function(){
+    if (!NB.open) return;
+    if (NB.tab === 'contact') return renderNbContact();
+    $('nbDlg').classList.remove('nb-ct'); CT.edit = null;
+    return _rn.apply(this, arguments);
+  };
+}
+// 휴대폰: 교무수첩에 '연락망' 탭
+if (MOB){
+  $('mobTabsNb').insertAdjacentHTML('beforeend', '<button type="button" data-mn="contact">연락망</button>');
+  document.querySelector('[data-mn="contact"]').onclick = () => { MS.nb = 'contact'; renderMob(); };
+  const _rm3 = renderMob;
+  renderMob = function(){
+    const r = _rm3.apply(this, arguments);
+    const ct = MS.seg === 'nb' && MS.nb === 'contact' && NB.open;
+    document.querySelector('.mob-date').hidden = ct || (MS.seg === 'nb' && !NB.open);
+    if ($('mbNbXlsx')) $('mbNbXlsx').hidden = ct;
+    return r;
+  };
+}
 /* ===== 처음 설정: 학교 · 반 · 날씨 지역 ===== */
 const SU = {pick:null, place:null};
 const suShort = n => String(n || '').replace(/등학교$/, '').replace(/학교$/, '');
