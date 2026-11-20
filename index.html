@@ -1629,7 +1629,7 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 // 1) 아래 비밀번호를 선생님만 아는 말로 바꾸세요. 학급 판에서 연결할 때 똑같이 넣어요.
 const PASSWORD = '여기에-비밀번호를-바꿔-쓰세요';
 
-// 2) 교무수첩 '메일로 보내기'를 쓰려면, 배포할 때 나오는 권한 창에서 메일 보내기도 허용해 주세요.
+// 2) 교무수첩 '메일로 보내기'를 쓰려면: 위쪽 함수 목록에서 '메일권한받기'를 골라 ▷ 실행 → 권한 검토 → 고급 → (안전하지 않음)으로 이동 → 'Gmail로 이메일 보내기'까지 모두 체크하고 허용해 주세요.
 
 // 기록은 선생님 구글 드라이브의 이 파일에 저장돼요. 하루에 한 번 백업도 남겨요(30일 치).
 const FILE_NAME = '우리반_동기화_자료.json';
@@ -1683,6 +1683,11 @@ function handle_(p) {
 // 오류가 나도 학급 판이 까닭을 알 수 있게 알려 줌
 function safe_(p) {
   try { return handle_(p); } catch (err) { return out_({ ok: false, error: String((err && err.message) || err) }); }
+}
+
+// 메일 보내기 권한을 받을 때 한 번 실행해요 (메일은 보내지 않아요).
+function 메일권한받기() {
+  Logger.log('메일 권한 확인 완료. 오늘 더 보낼 수 있는 메일: ' + MailApp.getRemainingDailyQuota());
 }
 
 function mailFolder_() {
@@ -5051,7 +5056,8 @@ async function nbMailSend(alt){
       const r = await syCall({action:'mail', to, subject, body, name:W.name, b64:await nbB64(blob)});
       if (r && r.ok){ ok(`✓ ${r.to}로 보냈어요 (${now}) · 구글 드라이브 ‘교무수첩_보관’에도 저장됨`); return; }
       if (r && r.error === 'unknown_action'){ bad('동기화 저장소 코드가 예전 것이라 메일을 보낼 수 없어요. 관리 → 기록 지키기 → 완전 동기화에서 새 코드를 복사해 Apps Script에 붙여 넣고, 배포 → 배포 관리 → 새 버전으로 다시 배포해 주세요.'); return; }
-      if (r && r.error && r.error !== 'network'){ bad(`메일을 보내지 못했어요 (${r.error}). Apps Script에서 메일 보내기 권한을 허용했는지 확인해 주세요.`); $('nbMailAlt').hidden = false; return; }
+      if (r && r.error && /send_mail|권한|permission/i.test(r.error)){ bad('메일 보내기 권한이 아직 없어요. Apps Script에서 함수 목록의 ‘메일권한받기’를 골라 ▷ 실행 → 권한 검토 → ‘Gmail로 이메일 보내기’까지 체크하고 허용해 주세요.'); $('nbMailAlt').hidden = false; return; }
+      if (r && r.error && r.error !== 'network'){ bad(`메일을 보내지 못했어요 (${r.error}).`); $('nbMailAlt').hidden = false; return; }
       // 저장소에 닿지 못함: 조용히 메일 앱으로 넘기지 않고 먼저 알려 줌
       if (!alt){ bad('구글 계정으로 메일을 보내지 못했어요. 잠시 뒤 다시 눌러 주세요. 계속 안 되면 Apps Script에서 메일 보내기 권한을 허용했는지 확인하거나, 아래 ‘메일 앱으로 보내기’를 써 주세요.'); $('nbMailAlt').hidden = false; return; }
     }
