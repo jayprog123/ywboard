@@ -1044,6 +1044,16 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 .per textarea{width:100%; min-width:0; border:none; border-bottom:1px dashed transparent; background:transparent; font-family:var(--display); font-size:.86em; line-height:1.3; padding:.15em 0; color:var(--ink); resize:none; overflow:hidden; field-sizing:content; max-height:4em}
 .per:hover textarea,.per textarea:focus{border-bottom-color:var(--line)}
 .per textarea::placeholder{color:#cbd7d1; font-family:var(--body); font-size:.85em}
+/* 관리 메뉴: 묶음 */
+.mg-pop.mg-new{min-width:0; width:min(31em,94vw); padding:10px; gap:0}
+.mg-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.mg-g{display:flex; flex-direction:column; border:1px solid var(--line-soft); border-radius:12px; padding:4px 4px 6px; background:var(--bg,#fbfdfc)}
+.mg-h{margin:0; padding:.45em .9em .2em; font-size:.78em; font-weight:700; letter-spacing:.02em; color:var(--teal)}
+.mg-new button{width:100%}
+.mg-foot{margin-top:8px; padding-top:6px; border-top:1px dashed var(--line); display:flex; justify-content:flex-end}
+.mg-foot button{width:auto; color:#9a3b00; font-size:.92em}
+.mg-foot button:hover{background:#fff1e5; color:#9a3b00}
+@media (max-width:520px){ .mg-grid{grid-template-columns:1fr} }
 /* ===== 처음 설정 ===== */
 #suDlg{position:fixed; inset:0; z-index:47; background:rgba(28,43,37,.45); display:flex; align-items:center; justify-content:center; padding:16px}
 .su-dlg{width:min(860px,96vw); max-height:94vh; gap:10px}
@@ -4814,6 +4824,36 @@ $('yrGo').onclick = () => {
   if ($('suBtn')) $('yrSetup').hidden = false;
 };
 $('yrSetup').onclick = () => { yrOpen(false); $('suBtn').click(); };
+/* ===== 관리 메뉴: 하는 일끼리 묶어서 보여 주기 ===== */
+(function(){
+  const pop = $('mgPop'); if (!pop || pop.classList.contains('mg-new')) return;
+  // 시정표 고치기도 관리 메뉴에서 바로 열 수 있게
+  const sch = document.createElement('button');
+  sch.type = 'button'; sch.id = 'mgSchBtn'; sch.textContent = '시정표 고치기';
+  sch.onclick = () => schOpen(true);
+  pop.appendChild(sch);
+  const groups = [
+    ['우리 반', ['rosterBtn', 'sheetBtn']],
+    ['수업 준비', ['mgSchBtn', 'ttBtn']],
+    ['화면', ['layBtn', 'cfgBtn', 'suBtn']],
+    ['기록 지키기', ['bkBtn', 'syBtn', 'mobBtn']],
+  ];
+  const grid = document.createElement('div'); grid.className = 'mg-grid';
+  groups.forEach(([name, ids]) => {
+    const btns = ids.map(id => $(id)).filter(Boolean);
+    if (!btns.length) return;
+    const g = document.createElement('div'); g.className = 'mg-g';
+    const h = document.createElement('p'); h.className = 'mg-h'; h.textContent = name; g.appendChild(h);
+    btns.forEach(b => g.appendChild(b));
+    grid.appendChild(g);
+  });
+  const foot = document.createElement('div'); foot.className = 'mg-foot';
+  if ($('yrBtn')) foot.appendChild($('yrBtn'));
+  pop.prepend(grid); grid.after(foot);
+  // 남은 단추(숨긴 '주간 기록' 등)는 그대로 숨겨 둠
+  [...pop.children].forEach(el => { if (el !== grid && el !== foot) el.hidden = true; });
+  pop.classList.add('mg-new');
+})();
 /* ===== 처음 설정: 학교 · 반 · 날씨 지역 ===== */
 const SU = {pick:null, place:null};
 const suShort = n => String(n || '').replace(/등학교$/, '').replace(/학교$/, '');
