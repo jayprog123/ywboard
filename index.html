@@ -18,7 +18,7 @@
 <meta name="theme-color" content="#2f7a5f">
 <title>용원칠판</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
 /* 밝은 교실 판: 위 띠(이름·자료·집중 모드) + 4열 x 2행 칸
    [지금: 시계 위, 시간표 아래(2칸) | 달력 | 타이머]
@@ -1139,6 +1139,84 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 .ct-imp-btns{display:flex; gap:8px}
 .ct-imp-btns .b{font-size:14px; padding:.4em 1.2em}
 @media print{ .ct-imp, .ct-up-tip{display:none!important} }
+/* ===== 11월 25일 판: 읽기 쉬운 화면 ===== */
+:root{
+  --ink:#16241e; --ink-2:#3d5048; --ink-3:#6a7d75;
+  --body:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+}
+body{font-weight:500; -webkit-font-smoothing:antialiased}
+body.font-old{--body:'Gowun Dodum','Malgun Gothic','Apple SD Gothic Neo',sans-serif; font-weight:400}
+b,strong,h3,h4{font-weight:700}
+.mini{font-size:.8em; font-weight:500; color:var(--ink-2); background:#edf3f0}
+.mini.go{color:#fff}
+input::placeholder,textarea::placeholder{color:#9fb0a8}
+.cell .head .tag{font-weight:400}
+
+/* ----- 시계 · 시간표 ----- */
+.c-now .now-wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:2.4cqw}
+.c-now .time{font-size:min(13.5cqw,31cqh)}
+.c-now .time .sec{color:var(--ink-3)}
+.c-now #date{font-weight:700}
+.c-now.big .now-wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:2.6cqw}
+.c-now.big .time{font-size:min(13cqw,32cqh)}
+.c-now.big.ttfull .now-wrap{grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr)}
+.c-now.big.ttfull .time{font-size:min(11cqw,30cqh)}
+#periods{display:flex; flex-direction:column; justify-content:center; gap:min(.7cqh,6px); padding:min(5cqh,40px) 0 0 2cqw; border-left:2px solid var(--line-soft); min-height:0}
+#periods .per{display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:.75em; flex:1 1 0; min-height:0; height:auto; max-height:15cqh;
+  padding:.1em .7em; border-radius:12px; font-size:clamp(15px, min(2.7cqw, calc(50cqh / var(--rows,8))), 44px); margin:0; overflow:hidden}
+.c-now.tt-topic #periods .per{font-size:clamp(14px, min(2.4cqw, calc(38cqh / var(--rows,8))), 38px)}
+.c-now.big #periods .per{max-height:none}
+#periods .per + .per{margin-top:0}
+.per-h{display:flex; flex-direction:column; justify-content:center; line-height:1.18; min-width:3.9em; gap:.05em}
+.per-h b{font-family:var(--display); font-weight:400; font-size:1em; white-space:nowrap}
+.per-h small{font-size:.56em; color:var(--ink-2); font-variant-numeric:tabular-nums; white-space:nowrap; letter-spacing:-.01em}
+.per-c{display:flex; flex-direction:column; justify-content:center; min-width:0; min-height:100%; cursor:text; line-height:1.12; border-radius:8px; padding:0 .25em}
+.per-c:hover{background:rgba(19,163,127,.07)}
+.per-sj{font-family:var(--display); font-size:1.2em; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.per-sj i{font-style:normal; font-family:var(--body); font-size:.62em; font-weight:400; color:#aebdb6}
+.per-tp{font-size:.66em; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.c-now.big .per-tp{white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
+.c-now.tt-topic .per-sj{font-size:1.1em}
+#periods .per.lunch .per-h b{color:var(--amber)}
+#periods .per.now{background:var(--teal); box-shadow:0 4px 14px rgba(19,163,127,.28)}
+#periods .per.now .per-h b,#periods .per.now .per-h small,#periods .per.now .per-sj,#periods .per.now .per-tp,#periods .per.now .per-sj i{color:#fff}
+#periods .per.done{opacity:.42}
+#periods .per.done .per-h b,#periods .per.done .per-sj{color:var(--ink)}
+.per-in{width:100%; min-width:0; font-family:var(--display); font-size:1.05em; padding:.15em .35em; border:2px solid var(--teal); border-radius:8px; background:#fff; color:var(--ink); resize:none; line-height:1.2}
+#periods .per.now .per-in{color:var(--ink)}
+.now-tools{position:absolute; top:clamp(8px,.7vw,14px); right:clamp(10px,.9vw,18px); z-index:3; display:flex; gap:6px; align-items:center; font-size:clamp(13px,.85vw,16px)}
+.c-now.big .now-tools{font-size:clamp(16px,1.1vw,22px)}
+.now-tools > .mini{position:static!important; font-size:1em!important; display:inline-flex!important}
+.now-tools > .now-sch{opacity:.6} .c-now:hover .now-tools > .now-sch{opacity:1}
+.now-det[aria-pressed="true"]{background:var(--teal-soft); color:var(--teal)}
+#calTitle{white-space:nowrap}
+@media (max-width:900px){ #periods{border-left:none; padding:0} #periods .per{font-size:17px; min-height:2.8em; flex:none} .now-tools > .now-sch{display:none!important} }
+
+/* ----- 화면 배치: 끌어서 옮기기 ----- */
+#layBar{flex-direction:column; align-items:stretch; gap:.5em; padding:.7em 1em; border-radius:18px; white-space:normal; width:min(1500px,96vw); font-size:15px}
+#layBar .lay-row{display:flex; align-items:center; gap:.7em; flex-wrap:wrap}
+#layBar .sp{flex:1}
+#layHint{color:#c9d6d0}
+.lay-lab{color:#c9d6d0; font-size:14px; display:inline-flex; align-items:center; gap:.4em}
+.lay-lab select{font-size:14px; padding:.2em .4em; background:#2f3f39; color:#fff; border-color:#45554f}
+.lay-tray{display:flex; gap:.4em; flex-wrap:wrap}
+.lay-chip{background:var(--lemon); color:#3a2f00; border:none; border-radius:999px; padding:.35em 1em; font-weight:700; font-size:14px; cursor:grab; touch-action:none}
+.lay-chip.lay-sel{box-shadow:0 0 0 3px #fff, 0 0 0 6px var(--teal)}
+.lay-none{color:#8fa39a; font-size:14px}
+body.lay-edit .c-now,body.lay-edit .c-cal{opacity:1; filter:none; pointer-events:auto}
+.lay-ov{cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; transition:background .15s, border-color .15s, transform .15s; gap:8px}
+.lay-ov .lay-name{font-family:var(--display); font-weight:400; font-size:clamp(20px,2vw,36px); color:var(--ink)}
+.lay-ov .lay-grip{font-size:14px; color:var(--ink-2); background:#fff; border:1px solid var(--line); border-radius:999px; padding:.2em .9em}
+.lay-ov .lay-swap{font-size:13px; color:var(--ink-2); display:flex; align-items:center; gap:.4em}
+.lay-ov .lay-swap select{font-size:13px; max-width:14em}
+.lay-ov.lay-mid{background:rgba(238,245,242,.9); border-color:var(--violet)}
+.lay-ov.lay-mid .lay-slot{color:var(--violet)}
+.lay-ov.lay-sel{background:rgba(255,246,204,.95); border-color:var(--amber); border-style:solid}
+.lay-ov.lay-over{background:rgba(223,244,236,.97); border-style:solid; border-width:5px; transform:scale(.985)}
+body.lay-dragging, body.lay-dragging *{cursor:grabbing!important}
+body.lay-dragging .lay-ov:not(.lay-over){opacity:.85}
+.lay-ghost{position:fixed; z-index:100; pointer-events:none; transform:translate(-50%,-60%) rotate(-2deg); background:var(--ink); color:#fff; font-family:var(--display);
+  font-size:22px; padding:.5em 1.2em; border-radius:14px; box-shadow:0 14px 40px rgba(0,0,0,.3); white-space:nowrap}
 /* ===== 처음 설정 ===== */
 #suDlg{position:fixed; inset:0; z-index:47; background:rgba(28,43,37,.45); display:flex; align-items:center; justify-content:center; padding:16px}
 .su-dlg{width:min(860px,96vw); max-height:94vh; gap:10px}
@@ -1622,7 +1700,7 @@ body.lay-edit .c-now,body.lay-edit .c-cal{opacity:.35; filter:grayscale(.4); poi
 
 <canvas id="fx" aria-hidden="true"></canvas>
 <div id="vBubble" role="status" aria-live="polite" hidden></div>
-<div id="verTag">용원칠판 · 11월 20일 판 · <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ko" target="_blank" rel="noopener license" title="출처를 밝히면 비영리로 자유롭게 쓸 수 있어요 (CC BY-NC 4.0)">© 2026 정예훈(개굴정)</a></div>
+<div id="verTag">용원칠판 · 11월 25일 판 · <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ko" target="_blank" rel="noopener license" title="출처를 밝히면 비영리로 자유롭게 쓸 수 있어요 (CC BY-NC 4.0)">© 2026 정예훈(개굴정)</a></div>
 
 <div id="bkDlg" hidden>
   <div class="roster bk" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
@@ -1950,7 +2028,7 @@ let shownKey = '';
 function tick(){
   const now = new Date(), day = now.getDay();
   const hm = `${p2(now.getHours())}:${p2(now.getMinutes())}`;
-  $('clock').innerHTML = `${hm}<span class="sec">${p2(now.getSeconds())}</span>`;
+  $('clock').innerHTML = (typeof secHide === 'function' && secHide(now)) ? hm : `${hm}<span class="sec">${p2(now.getSeconds())}</span>`;
   $('fClock').textContent = hm;
   { const v = viewDay(); $('date').innerHTML = `${v.getMonth()+1}월 ${v.getDate()}일 ${DAYS[v.getDay()]}` + (dayOff ? ` <span class="rel">${relName(dayOff)}</span>` : ''); }
   if (dkey(now) !== shownKey){ shownKey = dkey(now); renderAll(); }
@@ -5363,6 +5441,176 @@ function ctImportView(){
     ctImportView();
   };
 }
+/* ===== 11월 25일 판: 읽기 쉬운 글자 · 넓은 시간표 · 수업 중 초 숨기기 · 끌어서 화면 배치 ===== */
+
+// ---------- 1) 글꼴 ----------
+function applyFont(){ document.body.classList.toggle('font-old', cfg().font === 'old'); }
+
+// ---------- 2) 시계: 수업 시간에는 '초' 숨기기 ----------
+// secMode: 'class'(수업 시간에만 숨김, 기본) · 'show'(늘 보임) · 'hide'(늘 숨김)
+function secHide(now){
+  const m = cfg().secMode || 'class';
+  if (m === 'show') return false;
+  if (m === 'hide') return true;
+  const a = activity(now || new Date());
+  return a.idx >= 0 && /교시/.test(a.list[a.idx].n);
+}
+
+// ---------- 3) 시간표: 넓고 큰 글자, 과목 아래에 수업 내용 ----------
+function perParts(t){ t = t || ''; const i = t.indexOf(' · '); return i < 0 ? [t, ''] : [t.slice(0, i), t.slice(i + 3)]; }
+function ttTopicOn(){ return $('cNow').classList.contains('big') ? cfg().ttDetail !== false : cfg().ttDetailSmall === true; }
+ttDetBtn = function(){
+  const b = $('ttDetBtn'); if (!b) return;
+  const on = ttTopicOn(); b.setAttribute('aria-pressed', on); b.textContent = on ? '수업 내용 ✓' : '수업 내용';
+  b.title = $('cNow').classList.contains('big') ? '크게 볼 때 시간표에 수업 내용(학습 주제)도 보여요' : '시간표 과목 아래에 수업 내용(학습 주제)도 작게 보여요';
+};
+$('ttDetBtn').onclick = () => {
+  const big = $('cNow').classList.contains('big');
+  if (big) setCfg('ttDetail', !(cfg().ttDetail !== false)); else setCfg('ttDetailSmall', !(cfg().ttDetailSmall === true));
+  renderPeriods();
+};
+let perEditing = null;
+renderPeriods = function(){
+  if (perEditing && document.activeElement && document.activeElement.closest && document.activeElement.closest('#periods')) return; // 고치는 중이면 그대로
+  perEditing = null;
+  const day = viewDay().getDay(), list = (day === 0 || day === 6) ? SCHEDULE.filter(r => !r.skipDays) : todayList(day);
+  const topicOn = ttTopicOn(), big = $('cNow').classList.contains('big');
+  $('cNow').classList.toggle('ttfull', big && topicOn);
+  $('cNow').classList.toggle('tt-topic', topicOn);
+  $('periods').style.setProperty('--rows', Math.max(list.length, 5));
+  $('periods').innerHTML = list.map(r => {
+    const lunch = /점심/.test(r.n), [sj, tp] = perParts(planOf(r.n));
+    return `<div class="per${lunch ? ' lunch' : ''}"><div class="per-h"><b>${esc(r.n)}</b><small>${r.s}~${r.e}</small></div>
+      <div class="per-c" data-pc="${esc(r.n)}" tabindex="0" role="button" title="눌러서 고치기" aria-label="${esc(r.n)} 공부할 내용 고치기">
+        <span class="per-sj">${sj ? esc(sj) : `<i>${lunch ? '' : '공부할 내용'}</i>`}</span>${topicOn && tp ? `<span class="per-tp">${esc(tp)}</span>` : ''}</div></div>`;
+  }).join('');
+  $('periods').querySelectorAll('[data-pc]').forEach(c => {
+    const edit = () => perEdit(c);
+    c.onclick = edit; c.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); edit(); } };
+  });
+  ttDetBtn();
+  if (typeof tick === 'function') tick();
+};
+function perEdit(c){
+  const n = c.dataset.pc, full = planOf(n);
+  const big = $('cNow').classList.contains('big');
+  const inp = document.createElement(big ? 'textarea' : 'input');
+  inp.className = 'per-in'; inp.value = full; inp.setAttribute('aria-label', `${n} 공부할 내용`);
+  inp.placeholder = '과목 · 학습 주제 (예: 국어 · 겪은 일 쓰기)'; if (big) inp.rows = 2;
+  c.replaceWith(inp); perEditing = n; inp.focus(); try{ inp.setSelectionRange(full.length, full.length); }catch(e){}
+  inp.oninput = () => { const k = dkey(viewDay()); S.plan[k] = S.plan[k] || {}; S.plan[k][n] = inp.value; save(); if (typeof armDayBack === 'function') armDayBack(); };
+  inp.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); inp.blur(); } if (e.key === 'Escape'){ e.stopPropagation(); inp.blur(); } };
+  inp.onblur = () => { perEditing = null; setTimeout(renderPeriods, 0); };
+}
+
+// ---------- 4) 화면 배치: 끌어서 옮기기 ----------
+const SPAN_TOP = {'3-4-5':[3, 4, 5], '4-4-4':[4, 4, 4], '5-4-3':[5, 4, 3], '3-5-4':[3, 5, 4], '4-3-5':[4, 3, 5], '6-3-3':[6, 3, 3], '3-3-6':[3, 3, 6]};
+const SPAN_MID = {'8-4':[8, 4], '7-5':[7, 5], '6-6':[6, 6], '5-7':[5, 7]};
+const SPAN_BOT = {'3-3-3-3':[3, 3, 3, 3], '4-2-3-3':[4, 2, 3, 3], '3-3-2-4':[3, 3, 2, 4], '2-4-3-3':[2, 4, 3, 3], '3-3-4-2':[3, 3, 4, 2]};
+function getShape(){
+  let o = {}; try{ o = JSON.parse(localStorage.getItem('ywb-lay-shape') || '{}') || {}; }catch(e){}
+  return {top:SPAN_TOP[o.top] ? o.top : '3-4-5', mid:SPAN_MID[o.mid] ? o.mid : '7-5', bot:SPAN_BOT[o.bot] ? o.bot : '3-3-3-3', swap:!!o.swap};
+}
+function setShape(p){ const o = Object.assign(getShape(), p); try{ localStorage.setItem('ywb-lay-shape', JSON.stringify(o)); }catch(e){} applyLay(); }
+applyLay = function(){
+  const L = getLay(), sh = getShape(), spans = SPAN_TOP[sh.top].concat(SPAN_BOT[sh.bot]), mid = SPAN_MID[sh.mid];
+  Object.keys(WIDGETS).forEach(id => { const el = wEl(id), i = L.indexOf(id);
+    if (i < 0){ if (!el.classList.contains('temp-show')){ el.hidden = true; el.classList.remove('big'); } delete el.dataset.slot; if (id === 'noise' && NZ.on && !el.classList.contains('temp-show')) nzStop(); return; }
+    el.hidden = false; el.style.order = LAY_ORDER[i]; el.style.gridColumn = `span ${spans[i]}`; el.dataset.slot = i; });
+  const now = $('cNow'), cal = $('cCal');
+  now.style.gridColumn = `span ${mid[0]}`; cal.style.gridColumn = `span ${mid[1]}`;
+  now.style.order = sh.swap ? 5 : 4; cal.style.order = sh.swap ? 4 : 5;
+  renderTeams(); renderSeat(); renderWord(); renderDday(); renderNotice(); if (typeof fitMeal === 'function') fitMeal();
+  if (document.body.classList.contains('lay-edit')) layOverlays();
+};
+const slotName = i => i < 3 ? `윗줄 ${i + 1}번` : `아랫줄 ${i - 2}번`;
+const LYD = {sel:null, drag:null};
+layOverlays = function(){
+  document.querySelectorAll('.lay-ov').forEach(x => x.remove());
+  const L = getLay();
+  L.forEach((id, i) => { const el = wEl(id), ov = document.createElement('div'); ov.className = 'lay-ov'; ov.dataset.lk = 's' + i;
+    ov.innerHTML = `<span class="lay-slot">${slotName(i)}</span><b class="lay-name">${WIDGETS[id][0]}</b><span class="lay-grip">✥ 끌어서 옮기기</span>
+      <label class="lay-swap">다른 위젯으로 <select class="inp" aria-label="${slotName(i)} 칸에 둘 위젯">${Object.keys(WIDGETS).map(w => { const j = L.indexOf(w); return `<option value="${w}" ${w === id ? 'selected' : ''}>${WIDGETS[w][0]}${j >= 0 && w !== id ? ` (${slotName(j)}과 바꿈)` : ''}</option>`; }).join('')}</select></label>`;
+    ov.querySelector('select').onchange = e => { const w = e.target.value, j = L.indexOf(w), M = L.slice(); if (j >= 0) M[j] = id; M[i] = w; setLay(M); };
+    el.appendChild(ov); });
+  [['cNow', 'm0', '시계 · 시간표'], ['cCal', 'm1', '달력']].forEach(([cid, k, nm]) => { const ov = document.createElement('div'); ov.className = 'lay-ov lay-mid'; ov.dataset.lk = k;
+    ov.innerHTML = `<span class="lay-slot">가운데 줄</span><b class="lay-name">${nm}</b><span class="lay-grip">✥ 끌어서 ${cid === 'cNow' ? '달력' : '시계'}과 자리 바꾸기</span>`; $(cid).appendChild(ov); });
+  // 화면에 없는 위젯 (끌어다 칸에 놓으면 바뀜)
+  const tray = Object.keys(WIDGETS).filter(w => !L.includes(w));
+  $('layTray').innerHTML = tray.length ? tray.map(w => `<button type="button" class="lay-chip" data-lk="t${w}">${WIDGETS[w][0]}</button>`).join('') : '<span class="lay-none">모든 위젯이 화면에 있어요</span>';
+  document.querySelectorAll('[data-lk]').forEach(x => { x.onpointerdown = layDown; x.classList.toggle('lay-sel', LYD.sel === x.dataset.lk); });
+  const sh = getShape(); $('layTop').value = sh.top; $('layMid').value = sh.mid; $('layBot').value = sh.bot;
+  $('layHint').textContent = LYD.sel ? '옮길 곳을 눌러요 (같은 것을 다시 누르면 취소)' : '칸을 끌어서 다른 칸에 놓으면 자리가 바뀌어요. 눌러서 고른 뒤 옮길 칸을 눌러도 돼요.';
+};
+function layLabel(k){ if (k[0] === 's') return WIDGETS[getLay()[+k.slice(1)]][0]; if (k[0] === 't') return WIDGETS[k.slice(1)][0]; return k === 'm0' ? '시계 · 시간표' : '달력'; }
+function layCan(a, b){ if (!a || !b || a === b) return false; const ma = a[0] === 'm', mb = b[0] === 'm'; if (ma || mb) return ma && mb; if (a[0] === 't' && b[0] === 't') return false; return true; }
+function layDo(a, b){
+  if (!layCan(a, b)) return;
+  if (a[0] === 'm'){ setShape({swap:!getShape().swap}); return; }
+  if (a[0] === 't' && b[0] === 't') return;
+  if (b[0] === 't') [a, b] = [b, a];
+  const L = getLay().slice();
+  if (a[0] === 't'){ L[+b.slice(1)] = a.slice(1); }
+  else { const i = +a.slice(1), j = +b.slice(1); [L[i], L[j]] = [L[j], L[i]]; }
+  setLay(L);
+}
+function layDown(e){
+  if (e.button > 0 || e.target.closest('select,label.lay-swap')) return;
+  e.preventDefault();
+  const k = e.currentTarget.dataset.lk;
+  LYD.drag = {k, x:e.clientX, y:e.clientY, moved:false, over:null, g:null};
+  const move = ev => {
+    const d = LYD.drag; if (!d) return;
+    if (!d.moved && Math.hypot(ev.clientX - d.x, ev.clientY - d.y) > 8){ d.moved = true;
+      d.g = document.createElement('div'); d.g.className = 'lay-ghost'; d.g.textContent = layLabel(d.k); document.body.appendChild(d.g); document.body.classList.add('lay-dragging'); }
+    if (!d.moved) return;
+    d.g.style.left = ev.clientX + 'px'; d.g.style.top = ev.clientY + 'px';
+    const t = document.elementFromPoint(ev.clientX, ev.clientY), ov = t && (t.closest('[data-lk]') || (t.closest('.cell') && t.closest('.cell').querySelector(':scope > .lay-ov')));
+    const nk = ov && layCan(d.k, ov.dataset.lk) ? ov.dataset.lk : null;
+    if (nk !== d.over){ document.querySelectorAll('.lay-over').forEach(x => x.classList.remove('lay-over')); d.over = nk; if (nk) document.querySelector(`[data-lk="${nk}"]`).classList.add('lay-over'); }
+  };
+  const up = () => {
+    window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+    const d = LYD.drag; LYD.drag = null; document.body.classList.remove('lay-dragging');
+    if (d && d.g) d.g.remove(); document.querySelectorAll('.lay-over').forEach(x => x.classList.remove('lay-over'));
+    if (!d) return;
+    if (d.moved){ LYD.sel = null; if (d.over) layDo(d.k, d.over); else layOverlays(); return; }
+    // 눌러서 고르기 → 옮길 곳 누르기
+    if (!LYD.sel){ LYD.sel = d.k; layOverlays(); return; }
+    if (LYD.sel === d.k){ LYD.sel = null; layOverlays(); return; }
+    const a = LYD.sel; if (layCan(a, d.k)){ LYD.sel = null; layDo(a, d.k); } else { LYD.sel = d.k; layOverlays(); }
+  };
+  window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+}
+// 배치 막대: 안내 · 화면에 없는 위젯 · 칸 너비
+$('layBar').innerHTML = `<div class="lay-row"><b>화면 배치 바꾸기</b><span id="layHint"></span><span class="sp"></span>
+    <button class="mini" id="layReset" type="button">처음 배치로</button><button class="mini go" id="layDone" type="button">다 했어요</button></div>
+  <div class="lay-row lay-row2"><span class="lay-lab">화면에 없는 위젯</span><span id="layTray" class="lay-tray"></span><span class="sp"></span>
+    <label class="lay-lab">윗줄 너비 <select class="inp" id="layTop">${Object.keys(SPAN_TOP).map(k => `<option value="${k}">${k.replace(/-/g, ' · ')}</option>`).join('')}</select></label>
+    <label class="lay-lab">가운데 줄 <select class="inp" id="layMid"><option value="8-4">시계 넓게</option><option value="7-5">보통</option><option value="6-6">반반</option><option value="5-7">달력 넓게</option></select></label>
+    <label class="lay-lab">아랫줄 너비 <select class="inp" id="layBot">${Object.keys(SPAN_BOT).map(k => `<option value="${k}">${k.replace(/-/g, ' · ')}</option>`).join('')}</select></label></div>`;
+$('layDone').onclick = () => layEdit(false);
+$('layReset').onclick = () => { try{ localStorage.removeItem('ywb-lay-shape'); }catch(e){} LYD.sel = null; setLay(LAY_DEF.slice()); };
+$('layTop').onchange = e => setShape({top:e.target.value});
+$('layMid').onchange = e => setShape({mid:e.target.value});
+$('layBot').onchange = e => setShape({bot:e.target.value});
+{ const _le = layEdit; layEdit = function(on){ LYD.sel = null; _le(on); if (!on) document.querySelectorAll('.lay-ov').forEach(x => x.remove()); }; }
+
+// ---------- 5) 설정: 시계와 글자 ----------
+$('cfgMicSec').closest('.bk-step').insertAdjacentHTML('beforebegin', `<div class="bk-step"><b>시계와 글자</b>
+  <label class="cfg-row">시계의 초 <select class="inp" id="cfgSec"><option value="class">수업 시간에는 숨기기</option><option value="show">늘 보이기</option><option value="hide">늘 숨기기</option></select></label>
+  <label class="cfg-row">글꼴 <select class="inp" id="cfgFont"><option value="clear">또렷한 글꼴 (전자칠판 추천)</option><option value="old">예전 손글씨 글꼴</option></select></label>
+  <label class="cfg-row"><input type="checkbox" id="cfgTtSmall"> 작은 화면 시간표에도 수업 내용 보이기</label>
+  <p>수업 시간(‘교시’)에는 초가 사라져 아이들이 시계 대신 수업에 집중해요. 쉬는 시간에는 다시 보여요.</p></div>`);
+{ const _oc = openCfg; openCfg = function(open){ _oc(open); if (open){ const c = cfg(); $('cfgSec').value = c.secMode || 'class'; $('cfgFont').value = c.font === 'old' ? 'old' : 'clear'; $('cfgTtSmall').checked = c.ttDetailSmall === true; } }; }
+$('cfgSec').onchange = e => { setCfg('secMode', e.target.value); tick(); };
+$('cfgFont').onchange = e => { setCfg('font', e.target.value); applyFont(); };
+$('cfgTtSmall').onchange = e => { setCfg('ttDetailSmall', e.target.checked); renderPeriods(); };
+{ const _raF = renderAll; renderAll = function(){ _raF(); applyFont(); }; }
+// 시계 칸 위 단추들을 한 줄로 모으기 (겹치지 않게)
+{ const t = document.createElement('div'); t.className = 'now-tools'; $('cNow').prepend(t);
+  [$('schBtn'), $('ttDetBtn'), $('cNow').querySelector(':scope > [data-big]')].forEach(b => b && t.appendChild(b)); }
+applyFont(); applyLay(); renderPeriods();
 /* ===== 처음 설정: 학교 · 반 · 날씨 지역 ===== */
 const SU = {pick:null, place:null};
 const suShort = n => String(n || '').replace(/등학교$/, '').replace(/학교$/, '');
