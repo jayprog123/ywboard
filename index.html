@@ -1153,30 +1153,30 @@ input::placeholder,textarea::placeholder{color:#9fb0a8}
 .cell .head .tag{font-weight:400}
 
 /* ----- 시계 · 시간표 ----- */
-.c-now .now-wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:2.4cqw}
-.c-now .time{font-size:min(13.5cqw,31cqh)}
+.c-now .now-wrap{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:2cqw}
+.c-now .time{font-size:min(17cqw,46cqh)}
 .c-now .time .sec{color:var(--ink-3)}
 .c-now #date{font-weight:700}
 .c-now.big .now-wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:2.6cqw}
 .c-now.big .time{font-size:min(13cqw,32cqh)}
 .c-now.big.ttfull .now-wrap{grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr)}
 .c-now.big.ttfull .time{font-size:min(11cqw,30cqh)}
-#periods{display:flex; flex-direction:column; justify-content:center; gap:min(.7cqh,6px); padding:min(5cqh,40px) 0 0 2cqw; border-left:2px solid var(--line-soft); min-height:0}
-#periods .per{display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:.75em; flex:1 1 0; min-height:0; height:auto; max-height:15cqh;
-  padding:.1em .7em; border-radius:12px; font-size:clamp(15px, min(2.7cqw, calc(50cqh / var(--rows,8))), 44px); margin:0; overflow:hidden}
-.c-now.tt-topic #periods .per{font-size:clamp(14px, min(2.4cqw, calc(38cqh / var(--rows,8))), 38px)}
+#periods{display:flex; flex-direction:column; justify-content:center; gap:min(.5cqh,4px); padding:clamp(30px,6cqh,46px) 0 0 1.6cqw; border-left:2px solid var(--line-soft); min-height:0; overflow:hidden}
+#periods .per{display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:.6em; flex:1 1 0; min-height:0; height:auto; max-height:15cqh;
+  padding:0 .6em; border-radius:10px; font-size:clamp(13px, min(1.95cqw, calc(40cqh / var(--rows,8))), 34px); margin:0; overflow:hidden}
+.c-now.tt-topic #periods .per{font-size:clamp(12px, min(1.75cqw, calc(32cqh / var(--rows,8))), 30px)}
 .c-now.big #periods .per{max-height:none}
 #periods .per + .per{margin-top:0}
-.per-h{display:flex; flex-direction:column; justify-content:center; line-height:1.18; min-width:3.9em; gap:.05em}
+.per-h{display:flex; align-items:baseline; gap:.45em; line-height:1.1; min-width:0; white-space:nowrap}
 .per-h b{font-family:var(--display); font-weight:400; font-size:1em; white-space:nowrap}
-.per-h small{font-size:.56em; color:var(--ink-2); font-variant-numeric:tabular-nums; white-space:nowrap; letter-spacing:-.01em}
+.per-h small{font-size:.62em; color:var(--ink-2); font-variant-numeric:tabular-nums; white-space:nowrap; letter-spacing:-.01em}
 .per-c{display:flex; flex-direction:column; justify-content:center; min-width:0; min-height:100%; cursor:text; line-height:1.12; border-radius:8px; padding:0 .25em}
 .per-c:hover{background:rgba(19,163,127,.07)}
-.per-sj{font-family:var(--display); font-size:1.2em; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.per-sj{font-family:var(--display); font-size:1.12em; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .per-sj i{font-style:normal; font-family:var(--body); font-size:.62em; font-weight:400; color:#aebdb6}
 .per-tp{font-size:.66em; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .c-now.big .per-tp{white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
-.c-now.tt-topic .per-sj{font-size:1.1em}
+.c-now.tt-topic .per-sj{font-size:1.05em}
 #periods .per.lunch .per-h b{color:var(--amber)}
 #periods .per.now{background:var(--teal); box-shadow:0 4px 14px rgba(19,163,127,.28)}
 #periods .per.now .per-h b,#periods .per.now .per-h small,#periods .per.now .per-sj,#periods .per.now .per-tp,#periods .per.now .per-sj i{color:#fff}
