@@ -1217,6 +1217,31 @@ body.lay-dragging, body.lay-dragging *{cursor:grabbing!important}
 body.lay-dragging .lay-ov:not(.lay-over){opacity:.85}
 .lay-ghost{position:fixed; z-index:100; pointer-events:none; transform:translate(-50%,-60%) rotate(-2deg); background:var(--ink); color:#fff; font-family:var(--display);
   font-size:22px; padding:.5em 1.2em; border-radius:14px; box-shadow:0 14px 40px rgba(0,0,0,.3); white-space:nowrap}
+/* 새 소식 */
+#newsDlg{position:fixed; inset:0; z-index:90; background:rgba(22,36,30,.45); display:flex; align-items:center; justify-content:center; padding:16px}
+.news-dlg{background:#fff; border-radius:24px; width:min(760px,96vw); max-height:90vh; display:flex; flex-direction:column; box-shadow:0 30px 80px rgba(22,36,30,.35); overflow:hidden}
+.news-top{display:flex; align-items:center; gap:16px; padding:24px 28px 18px; background:linear-gradient(135deg,var(--teal-soft),var(--lemon-soft))}
+.news-frog{width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; font-size:48px; background:#fff; border-radius:50%; box-shadow:0 4px 14px rgba(19,163,127,.2)}
+.news-frog svg{width:46px; height:46px}
+.news-kick{margin:0; font-size:15px; font-weight:700; color:var(--teal)}
+.news-top h2{margin:.1em 0 0; font-family:var(--display); font-weight:400; font-size:32px; color:var(--ink)}
+.news-body{overflow:auto; padding:18px 28px 6px}
+.news-g h3{margin:0 0 10px; font-size:18px; display:flex; align-items:center; gap:.5em}
+.news-new{font-size:13px; background:var(--coral); color:#fff; border-radius:999px; padding:.15em .7em}
+.news-g ol{margin:0 0 18px; padding:0; list-style:none; counter-reset:n; display:flex; flex-direction:column; gap:10px}
+.news-g li{counter-increment:n; display:grid; grid-template-columns:32px 1fr; column-gap:12px; row-gap:2px; background:#f6faf8; border:1px solid var(--line-soft); border-radius:14px; padding:12px 14px}
+.news-g li::before{content:counter(n); grid-row:span 2; width:32px; height:32px; border-radius:50%; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700}
+.news-g li b{font-size:18px; color:var(--ink)}
+.news-g li span{font-size:15px; line-height:1.55; color:var(--ink-2)}
+.news-g.old h3{color:var(--ink-2); font-size:16px}
+.news-g.old li{background:#fff; padding:9px 12px}
+.news-g.old li::before{background:var(--line); color:var(--ink-2)}
+.news-g.old li b{font-size:16px}
+.news-g.old li span{font-size:14px}
+.news-btns{display:flex; align-items:center; gap:12px; padding:14px 28px 22px; border-top:1px solid var(--line-soft)}
+.news-tip{flex:1; font-size:13px; color:var(--ink-3)}
+.news-btns .b{font-size:18px; padding:.55em 1.8em}
+@media (max-width:600px){ .news-top h2{font-size:24px} .news-tip{display:none} .news-btns .b{width:100%} }
 /* ===== 처음 설정 ===== */
 #suDlg{position:fixed; inset:0; z-index:47; background:rgba(28,43,37,.45); display:flex; align-items:center; justify-content:center; padding:16px}
 .su-dlg{width:min(860px,96vw); max-height:94vh; gap:10px}
@@ -3005,7 +3030,7 @@ function runCommand(raw){
   if (/작게|줄여|원래대로|돌아가/.test(c)){ const wasFocus = !$('focus').hidden; closeBig(); setFocus(false); return reply(wasFocus ? '집중 모드를 끝냈어요' : '원래 크기로 돌렸어요', raw); }
   // 집중 모드
   if (/집중/.test(c) && /(끝|꺼|그만|해제|풀|나가|종료|멈|닫|취소)/.test(c)){ setFocus(false); return reply('집중 모드를 끝냈어요', raw); }
-  if (/집중/.test(c)){ setFocus(true); return reply('집중 모드예요', raw); }
+  if (/집중/.test(c)){ setFocus(true); return reply('칠판을 열었어요', raw); }
   // 타이머
   const sec = readTime(c);
   if (sec > 0 && !/몇\s*분/.test(c)){ setT(sec); $('tStart').click(); const m = Math.floor(sec/60), s2 = sec % 60; return reply(`${m ? m + '분 ' : ''}${s2 ? s2 + '초 ' : ''}타이머를 시작할게요`, raw); }
@@ -5611,6 +5636,52 @@ $('cfgTtSmall').onchange = e => { setCfg('ttDetailSmall', e.target.checked); ren
 { const t = document.createElement('div'); t.className = 'now-tools'; $('cNow').prepend(t);
   [$('schBtn'), $('ttDetBtn'), $('cNow').querySelector(':scope > [data-big]')].forEach(b => b && t.appendChild(b)); }
 applyFont(); applyLay(); renderPeriods();
+/* ===== 새 소식: 새 판이 올라오면 처음 열 때 한 번, 바뀐 점을 알려 줌 ===== */
+const NEWS_VER = '2026-11-25';
+const NEWS = [
+  {ver:'11월 25일 판', items:[
+    ['글자가 또렷해졌어요', '또렷한 글꼴로 바꾸고 흐린 회색 글씨를 진하게 했어요. 예전 글꼴은 관리 → 설정 → 시계와 글자에서 고를 수 있어요.'],
+    ['시간표가 넓고 커졌어요', '과목을 크게, 시간은 교시 아래에 작게 보여요. ‘수업 내용’을 켜면 과목 아래에 학습 주제도 나와요. 과목을 누르면 바로 고칠 수 있어요.'],
+    ['수업 시간에는 시계의 초가 숨어요', '‘O교시’ 동안은 초가 사라지고, 쉬는 시간에는 다시 보여요. 설정에서 늘 보이기·늘 숨기기로 바꿀 수 있어요.'],
+    ['집중 모드는 칠판으로 바뀌었어요', '위의 ‘집중 모드’ 단추를 없앴어요. 수업에 집중할 때는 ‘칠판’을 쓰면 돼요. “집중 모드”라고 말해도 칠판이 열려요.'],
+    ['화면 배치를 끌어서 바꿔요', '관리 → 화면 배치에서 칸을 끌어 다른 칸에 놓으면 자리가 바뀌어요. 칸을 누르고 옮길 칸을 눌러도 돼요. 칸 너비와 시계·달력 자리도 바꿀 수 있어요.']]},
+  {ver:'11월 20일 판', items:[
+    ['교무수첩 비상 연락망', '보호자 연락처를 적어 두면 휴대폰에서 바로 전화·문자를 걸 수 있어요. 학교 연락망 엑셀도 그대로 올릴 수 있어요.'],
+    ['믿을 수 있는 기록', '아이 기록을 쓴 시각과 고친 흔적이 남고, 입력하는 즉시 자동 저장돼요. 엑셀에 교사 서명칸을 넣을 수 있어요.'],
+    ['이 주 기록 메일로 보내기', '교무수첩 주간 탭에서 이 주 엑셀을 메일로 보내요. 완전 동기화를 쓰면 구글 드라이브에도 쌓여요.']]}
+];
+function newsOpen(o){
+  $('newsDlg').hidden = !o;
+  if (o){ $('newsKick').textContent = `${NEWS[0].ver} · 새로 바뀐 기능`; $('newsBody').innerHTML = NEWS.map((g, gi) => `<section class="news-g${gi ? ' old' : ''}"><h3>${esc(g.ver)}${gi ? '' : ' <span class="news-new">이번 업데이트</span>'}</h3>
+      <ol>${g.items.map(([t, d]) => `<li><b>${esc(t)}</b><span>${esc(d)}</span></li>`).join('')}</ol></section>`).join(''); $('newsOk').focus(); }
+  else { try{ localStorage.setItem('ywb-news', NEWS_VER); }catch(e){} }
+}
+document.body.insertAdjacentHTML('beforeend', `<div id="newsDlg" class="dlg-wrap" hidden><div class="news-dlg" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
+  <div class="news-top"><span class="news-frog" aria-hidden="true">🐸</span><div><p class="news-kick" id="newsKick"></p><h2 id="newsTitle">업데이트 안내</h2></div></div>
+  <div class="news-body" id="newsBody"></div>
+  <div class="news-btns"><span class="news-tip">관리 메뉴의 ‘업데이트 안내’에서 다시 볼 수 있어요</span><button class="b go" id="newsOk" type="button">확인했어요</button></div></div></div>`);
+{ const sv = document.querySelector('.brand svg'); if (sv) document.querySelector('.news-frog').innerHTML = sv.outerHTML; }
+$('newsOk').onclick = () => newsOpen(false);
+$('newsDlg').addEventListener('click', e => { if (e.target === $('newsDlg')) newsOpen(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('newsDlg').hidden) newsOpen(false); });
+// 관리 메뉴 맨 아래 · 판 표시에서 다시 열기
+if ($('yrBtn')) $('yrBtn').insertAdjacentHTML('beforebegin', '<button type="button" id="newsBtn">업데이트 안내</button>');
+if ($('newsBtn')) $('newsBtn').onclick = () => { if ($('mgPop')) $('mgPop').hidden = true; newsOpen(true); };
+if ($('verTag')){ $('verTag').style.cursor = 'pointer'; $('verTag').title = '눌러서 업데이트 안내 보기'; $('verTag').addEventListener('click', e => { if (!e.target.closest('a')) newsOpen(true); }); }
+// 처음 쓰는 사람(명단이 비어 있음)에게는 띄우지 않고, 쓰던 사람에게만 새 판마다 한 번
+setTimeout(() => {
+  let seen = ''; try{ seen = localStorage.getItem('ywb-news') || ''; }catch(e){}
+  if (seen === NEWS_VER) return;
+  const used = (typeof roster === 'function' && roster().some(s => s.name && s.name.trim())) || Object.keys(S.plan || {}).length || Object.keys(S.events || {}).length;
+  if (!used){ try{ localStorage.setItem('ywb-news', NEWS_VER); }catch(e){} return; }
+  const busy = [...document.querySelectorAll('.dlg-wrap, [id$="Dlg"]')].some(d => d !== $('newsDlg') && !d.hidden && getComputedStyle(d).display !== 'none');
+  if (busy || document.body.classList.contains('lay-edit')) return; // 다른 창이 떠 있으면 다음에
+  newsOpen(true);
+}, 2500);
+
+/* ===== 집중 모드 없애기 (칠판으로 대신) ===== */
+if ($('focusBtn')) $('focusBtn').remove();
+setFocus = function(on){ if ($('focus')) $('focus').hidden = true; if (on) openChalk(true); };
 /* ===== 처음 설정: 학교 · 반 · 날씨 지역 ===== */
 const SU = {pick:null, place:null};
 const suShort = n => String(n || '').replace(/등학교$/, '').replace(/학교$/, '');
