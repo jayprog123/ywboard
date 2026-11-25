@@ -5709,7 +5709,7 @@ const b64e = b => { let s = ''; for (let i = 0; i < b.length; i++) s += String.f
 const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const cat8 = (...a) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let i = 0; a.forEach(x => { o.set(x, i); i += x.length; }); return o; };
 const nbLk = () => (nbData().lock && nbData().lock.pk) ? nbData().lock : null;
-const isEnc = v => typeof v === 'string' && v.startsWith(ENC);
+function isEnc(v){ return typeof v === 'string' && v.startsWith('ENC1:'); }
 function encSeal(v){
   const L = nbLk(); if (!L || typeof v !== 'string' || !v || isEnc(v)) return v;
   const hit = NC.cache.get(v); if (hit) return hit;
@@ -5736,7 +5736,7 @@ function sealS(){ return nbLk() ? encMap(S, encSeal) : S; }
 function encSealIn(){ if (!nbLk()) return; const c = encMap(S, encSeal); S.nb = c.nb; S.notes = c.notes; S.noteDel = c.noteDel; }
 function encOpenIn(){ if (!NC.sk) return; const c = encMap(S, encOpen); S.nb = c.nb; S.notes = c.notes; S.noteDel = c.noteDel; }
 function encHasLocked(){ let f = false; encMap(S, v => { if (isEnc(v)) f = true; return v; }); return f; }
-function ntShow(t){ return isEnc(t) ? '🔒 교무수첩을 열면 보여요' : t; }
+function ntShow(t){ return (typeof t === 'string' && t.startsWith('ENC1:')) ? '🔒 교무수첩을 열면 보여요' : t; }
 
 // ----- 저장하는 곳마다 잠긴 글자로 -----
 { const _lc = local; local = function(get, v){ return get ? _lc(true) : _lc(false, v === S ? sealS() : v); }; }
